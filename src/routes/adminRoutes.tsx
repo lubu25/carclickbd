@@ -3,6 +3,7 @@ import HasAccess from "./RoleBasedRouteGenerator";
 import {
   AppstoreOutlined,
   BarChartOutlined,
+  CreditCardOutlined,
   CustomerServiceOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -98,6 +99,7 @@ const adminRoutes: IDNavMenuItem[] = ([
   },
   { icon: <CustomerServiceOutlined />, label: "Support", route: "/admin/support" },
   { icon: <MailOutlined />, label: "Mailbox", route: "/admin/mailbox" },
+  { icon: <CreditCardOutlined />, label: "Payment Gateway", route: "/admin/payment-gateway" },
   { icon: <SettingOutlined />, label: "Settings", route: "/admin/settings" },
 ] as IDNavMenuItem[]).filter(Boolean);
 
