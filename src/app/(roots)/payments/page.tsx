@@ -5,33 +5,45 @@ import { Button, Result, Spin, message } from 'antd';
 import { ResultStatusType } from 'antd/es/result';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FileSearch } from 'lucide-react';
-import { useSyncBdGatePaymentStatusMutation } from '@/Redux/api/paymentApi';
+import {
+  useSyncBdGatePaymentStatusMutation,
+  useSyncEpsPaymentStatusMutation,
+} from '@/Redux/api/paymentApi';
 
 function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const type = searchParams.get('type');
+  const provider = searchParams.get('provider');
   const token = searchParams.get('token') || searchParams.get('session_token');
   const chassis = searchParams.get('chassis') || '';
   const paymentId = searchParams.get('payment_id') || '';
   const isAuctionSheetPayment = type === 'auction-sheet';
   const [syncBdGatePaymentStatus, { isLoading: isSyncing }] =
     useSyncBdGatePaymentStatusMutation();
+  const [syncEpsPaymentStatus] = useSyncEpsPaymentStatusMutation();
 
   useEffect(() => {
     if (isAuctionSheetPayment || !token || token === '{session_token}') return;
 
-    syncBdGatePaymentStatus(token)
-      .unwrap()
-      .catch((error: any) => {
-        message.error(
-          error?.data?.message ||
-            error?.message ||
-            'Could not verify BDGate payment status',
-        );
-      });
-  }, [isAuctionSheetPayment, syncBdGatePaymentStatus, token]);
+    const verifyPayment = async () => {
+      if (provider === 'eps') {
+        await syncEpsPaymentStatus(token).unwrap();
+        return;
+      }
+
+      await syncBdGatePaymentStatus(token).unwrap();
+    };
+
+    verifyPayment().catch((error: any) => {
+      message.error(
+        error?.data?.message ||
+          error?.message ||
+          `Could not verify ${provider === 'eps' ? 'EPS' : 'BDGate'} payment status`,
+      );
+    });
+  }, [isAuctionSheetPayment, provider, syncBdGatePaymentStatus, syncEpsPaymentStatus, token]);
 
   useEffect(() => {
     if (status !== 'success' || !isAuctionSheetPayment) return;
@@ -60,7 +72,9 @@ function PaymentPageContent() {
     status === 'success'
       ? isAuctionSheetPayment
         ? 'Payment return received'
-        : 'Payment submitted successfully'
+        : provider === 'eps'
+          ? 'EPS payment submitted successfully'
+          : 'Payment submitted successfully'
       : status === 'cancelled'
         ? 'Payment cancelled'
         : 'Payment was not completed';
@@ -68,8 +82,10 @@ function PaymentPageContent() {
     status === 'success' && isAuctionSheetPayment
       ? 'Payment return received. Confirming BDGate payment and opening the protected download...'
       : status === 'success'
-        ? 'BDGate has received your payment request. Your order will update after gateway confirmation.'
-        : 'You can return and try the BDGate payment again.';
+        ? provider === 'eps'
+          ? 'EPS has received your payment request. Your order will update after gateway confirmation.'
+          : 'BDGate has received your payment request. Your order will update after gateway confirmation.'
+        : 'You can return and try the payment again.';
 
   return (
     <div className="min-h-[55vh] bg-slate-50 px-4 py-16">

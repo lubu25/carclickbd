@@ -29,6 +29,15 @@ const paymentApi = baseApi.injectEndpoints({
       invalidatesTags: ['payment'],
     }),
 
+    initEpsPayment: build.mutation({
+      query: (items: any) => ({
+        url: `${PAYMENT}/eps/init`,
+        method: 'POST',
+        data: items,
+      }),
+      invalidatesTags: ['payment'],
+    }),
+
     initBdGateAuctionSheetPayment: build.mutation({
       query: (items: any) => ({
         url: `${PAYMENT}/bdgate/auction-sheet`,
@@ -42,6 +51,14 @@ const paymentApi = baseApi.injectEndpoints({
     syncBdGatePaymentStatus: build.mutation({
       query: (token: string) => ({
         url: `${PAYMENT}/bdgate/status/${token}`,
+        method: 'GET',
+      }),
+      invalidatesTags: ['payment', 'order'],
+    }),
+
+    syncEpsPaymentStatus: build.mutation({
+      query: (token: string) => ({
+        url: `${PAYMENT}/eps/status/${token}`,
         method: 'GET',
       }),
       invalidatesTags: ['payment', 'order'],
@@ -69,8 +86,10 @@ const paymentApi = baseApi.injectEndpoints({
 export const {
   useGetPaymentQuery,
   useInitBdGatePaymentMutation,
+  useInitEpsPaymentMutation,
   useInitBdGateAuctionSheetPaymentMutation,
   useSyncBdGatePaymentStatusMutation,
+  useSyncEpsPaymentStatusMutation,
   useLazyGetBdGateAuctionSheetPaymentStatusQuery,
   useCreatePaymentMutation,
 } = paymentApi;

@@ -8,6 +8,7 @@ import Appearance from '@/components/settings/Appearance';
 import HeaderCarouselSettings from '@/components/settings/HeaderCarousel';
 import ProfileComponentPage from '@/components/dashboardlayout/profile/Page';
 import ChangePassword from '@/components/dashboardlayout/profile/ChangePassword';
+import PaymentGatewaySettings from '@/components/settings/PaymentGatewaySettings';
 
 const { TabPane } = Tabs;
 
@@ -56,6 +57,11 @@ export default function AdminSettingsPage() {
             </Button>
           </Form>
         </TabPane>
+        {/* Payment Gateway Settings */}
+        <TabPane tab="Payment Gateway" key="payment-gateway">
+          <PaymentGatewaySettings />
+        </TabPane>
+
         {/* Profile Settings */}
         <TabPane tab="Change Password" key="password">
           <Form layout="vertical" onFinish={handleSave}>
