@@ -1,0 +1,22 @@
+{
+  "apiBaseUrl": "https://sandboxpgapi.eps.com.bd",
+  "liveApiBaseUrl": "https://pgapi.eps.com.bd",
+  "merchantId": "",
+  "username": "xyz.eps@gmail.com",
+  "password": "Emon258@",
+  "apiKey": "",
+  "apiSecret": "",
+  "authHash": "iRbuoCMiOwQIIXyEvq30l61J+XAq0D/htjKQwiZl4jn7szmMMJTNL7ua0iej2Jtw2ch+D+/uBQ7WgZKcf8hQ8w==",
+  "initHash": "P0jzXSQU+ea41Ho+LX6UTgikdMCX8UeqQyZpcm+YoI+jWvWewDIHYXnF8Ji/2rv0xkJxJR9avLoVzpCWUEjTTg==",
+  "storeId": "35b518f6-aab7-4af1-b16c-335052e9a55c",
+  "successUrl": "",
+  "failUrl": "",
+  "cancelUrl": "",
+  "ipnUrl": "",
+  "displayLabel": "EPS Secure Payment",
+  "logoUrl": "",
+  "minimumAmount": 1,
+  "maximumAmount": 500000,
+  "shortDescription": "Pay securely through EPS.",
+  "customerInstructions": "You will be redirected to EPS to complete payment."
+}
