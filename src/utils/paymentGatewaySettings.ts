@@ -1,11 +1,10 @@
 export type PaymentGatewayMode = 'sandbox' | 'live';
-export type ActivePaymentGateway = 'bdgate' | 'eps';
+export type ActivePaymentGateway = 'eps';
 
 export type PaymentGatewaySettings = {
   activeGateway: ActivePaymentGateway;
   mode: PaymentGatewayMode;
   epsApiKey: string;
-  bdGateApiKey: string;
   enabled: boolean;
   updatedAt: string;
 };
@@ -13,10 +12,9 @@ export type PaymentGatewaySettings = {
 export const PAYMENT_GATEWAY_SETTINGS_KEY = 'carclickbd_payment_gateway_settings';
 
 export const defaultPaymentGatewaySettings: PaymentGatewaySettings = {
-  activeGateway: 'bdgate',
+  activeGateway: 'eps',
   mode: 'sandbox',
   epsApiKey: '',
-  bdGateApiKey: '',
   enabled: true,
   updatedAt: '',
 };
@@ -66,29 +64,10 @@ export const savePaymentGatewaySettings = (
 };
 
 export const getActivePaymentGateway = (): ActivePaymentGateway => {
-  const settings = getPaymentGatewaySettings();
-
-  if (!settings.enabled) {
-    return 'bdgate';
-  }
-
-  if (settings.activeGateway === 'eps' && !settings.epsApiKey.trim()) {
-    return 'bdgate';
-  }
-
-  return settings.activeGateway;
+  return 'eps';
 };
 
-export const isGatewayConfigured = (gateway: ActivePaymentGateway): boolean => {
+export const isGatewayConfigured = (_gateway: ActivePaymentGateway): boolean => {
   const settings = getPaymentGatewaySettings();
-
-  if (!settings.enabled) {
-    return false;
-  }
-
-  if (gateway === 'eps') {
-    return Boolean(settings.epsApiKey?.trim());
-  }
-
-  return Boolean(settings.bdGateApiKey?.trim()) || settings.activeGateway === 'bdgate';
+  return settings.enabled;
 };

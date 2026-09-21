@@ -1,12 +1,12 @@
 "use client";
 
-import { useInitEpsPaymentMutation } from "@/Redux/api/paymentApi";
-import { getPaymentGatewaySettings } from "@/utils/paymentGatewaySettings";
 import { Button, message } from "antd";
 import { CreditCard, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { getPaymentGatewaySettings } from "@/utils/paymentGatewaySettings";
 
 const EPS = ({ data, setPaymentStatus }: any) => {
-  const [initEpsPayment, { isLoading }] = useInitEpsPaymentMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async () => {
     if (!data?._id) {
@@ -14,26 +14,26 @@ const EPS = ({ data, setPaymentStatus }: any) => {
       return;
     }
 
-    const settings = getPaymentGatewaySettings();
-
-    if (!settings.enabled || !settings.epsApiKey?.trim()) {
-      message.error(
-        "EPS is not configured yet. Save the EPS API key in the admin payment settings first.",
-      );
-      return;
-    }
-
     try {
-      const result = await initEpsPayment({
-        order: data._id,
-        amount: Number(data.totalAmount || 0),
-        currency: "BDT",
-        api_key: settings.epsApiKey,
-        gateway_mode: settings.mode,
-        success_url: `${window.location.origin}/payments?status=success&provider=eps&order=${data._id}&token={session_token}`,
-        fail_url: `${window.location.origin}/payments?status=failed&provider=eps&order=${data._id}&token={session_token}`,
-        cancel_url: `${window.location.origin}/payments?status=cancelled&provider=eps&order=${data._id}&token={session_token}`,
-      }).unwrap();
+      setIsLoading(true);
+      const settings = getPaymentGatewaySettings();
+      const response = await fetch("/api/eps/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order: data._id,
+          amount: Number(data.totalAmount || 0),
+          currency: "BDT",
+          gateway_mode: settings.mode,
+          success_url: `${window.location.origin}/payments?status=success&provider=eps&order=${data._id}&token={token}`,
+          fail_url: `${window.location.origin}/payments?status=failed&provider=eps&order=${data._id}&token={token}`,
+          cancel_url: `${window.location.origin}/payments?status=cancelled&provider=eps&order=${data._id}&token={token}`,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.message || "EPS initialization failed");
+      }
 
       const paymentUrl =
         result?.data?.payment_url ||
@@ -54,6 +54,8 @@ const EPS = ({ data, setPaymentStatus }: any) => {
       message.error(
         error?.data?.message || error?.message || "EPS payment failed",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 

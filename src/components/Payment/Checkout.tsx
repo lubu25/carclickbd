@@ -1,5 +1,4 @@
 "use client";
-import BDGate from "@/components/Cart/BDGate";
 import EPS from "@/components/Cart/EPS";
 import { useOrderQuery } from "@/Redux/api/orderApi";
 import { Card, Col, Row, Typography, Spin,} from "antd";
@@ -7,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { LuPrinter } from "react-icons/lu";
 import { FaRegCopy } from "react-icons/fa";
-import { getActivePaymentGateway } from "@/utils/paymentGatewaySettings";
 
 const { Title, Text } = Typography;
 
@@ -17,8 +15,6 @@ const Checkout = () => {
   const order = data?.data;
 
   const [paymentStatus, setPaymentStatus] = useState("");
-  const activeGateway = getActivePaymentGateway();
-
   return (
     <div className="bg-gray-100 py-16 flex justify-center items-center">
       <Card className="bg-white rounded-xl shadow-lg overflow-hidden max-w-5xl w-full">
@@ -28,7 +24,7 @@ const Checkout = () => {
               Secure Checkout
             </Title>
             <Text type="secondary" className="text-gray-500">
-              Complete your payment securely with BDGate
+              Complete your payment securely with EPS
             </Text>
           </div>
 
@@ -44,11 +40,7 @@ const Checkout = () => {
                     Secure Payment Method
                   </Title>
                   <div className="flex flex-col gap-4">
-                    {activeGateway === "eps" ? (
-                      <EPS data={order} setPaymentStatus={setPaymentStatus} />
-                    ) : (
-                      <BDGate data={order} setPaymentStatus={setPaymentStatus} />
-                    )}
+                    <EPS data={order} setPaymentStatus={setPaymentStatus} />
                   </div>
                 </div>
               </Col>

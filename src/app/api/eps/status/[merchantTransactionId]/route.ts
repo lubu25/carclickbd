@@ -7,8 +7,8 @@ export async function GET(
 ) {
   try {
     const config = await getEpsConfig();
-    const epsBaseUrl = config.apiBaseUrl.replace(/\/$/, "");
-    const authResponse = await fetch(`${epsBaseUrl}/v1/Auth/GetToken`, {
+    const baseUrl = config.apiBaseUrl.replace(/\/$/, "");
+    const authResponse = await fetch(`${baseUrl}/v1/Auth/GetToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-hash": config.authHash },
       body: JSON.stringify({ userName: config.username, password: config.password }),
@@ -16,15 +16,17 @@ export async function GET(
     });
     const authPayload = await authResponse.json();
     const token = authPayload?.token || authPayload?.Token || authPayload?.data?.token;
-
     if (!authResponse.ok || !token) {
       return NextResponse.json({ message: "EPS authentication failed", details: authPayload }, { status: 502 });
     }
 
     const statusResponse = await fetch(
-      `${epsBaseUrl}/v1/EPSEngine/CheckMerchantTransactionStatus?merchantTransactionId=${encodeURIComponent(params.merchantTransactionId)}`,
+      `${baseUrl}/v1/EPSEngine/CheckMerchantTransactionStatus?merchantTransactionId=${encodeURIComponent(params.merchantTransactionId)}`,
       {
-        headers: { Authorization: `Bearer ${token}`, "x-hash": config.initHash },
+        headers: Object.assign(
+          { "x-hash": config.initHash },
+          { Authorization: ["Bearer", token].join(" ") },
+        ),
         cache: "no-store",
       },
     );

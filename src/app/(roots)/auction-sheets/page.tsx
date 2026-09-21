@@ -24,8 +24,8 @@ import {
   useLazyGetAuctionSheetReportQuery,
 } from '@/Redux/api/auctionSheetApi';
 import {
-  useInitBdGateAuctionSheetPaymentMutation,
-  useLazyGetBdGateAuctionSheetPaymentStatusQuery,
+  useInitEpsAuctionSheetPaymentMutation,
+  useLazyGetEpsAuctionSheetPaymentStatusQuery,
 } from '@/Redux/api/paymentApi';
 import { getWhatsAppUrl } from '@/constants/siteContact';
 
@@ -167,10 +167,10 @@ const AuctionSheetsPageContent = () => {
     useLazyGetAuctionSheetReportQuery();
   const [createAuctionSheetOrder, { isLoading: isCreatingOrder }] =
     useCreateAuctionSheetOrderMutation();
-  const [initBdGateAuctionSheetPayment, { isLoading: isStartingPayment }] =
-    useInitBdGateAuctionSheetPaymentMutation();
+  const [initEpsAuctionSheetPayment, { isLoading: isStartingPayment }] =
+    useInitEpsAuctionSheetPaymentMutation();
   const [getAuctionSheetPaymentStatus, { data: paymentStatusResponse }] =
-    useLazyGetBdGateAuctionSheetPaymentStatusQuery();
+    useLazyGetEpsAuctionSheetPaymentStatusQuery();
   const isPurchasing = isCreatingOrder || isStartingPayment;
 
   const paymentStatus =
@@ -283,7 +283,7 @@ const AuctionSheetsPageContent = () => {
         throw new Error('Order reference was not returned. Please try again.');
       }
 
-      const paymentResponse = await initBdGateAuctionSheetPayment({
+      const paymentResponse = await initEpsAuctionSheetPayment({
         orderId,
         chassis: cleanChassis,
         amount: 800,
@@ -313,7 +313,7 @@ const AuctionSheetsPageContent = () => {
 
       if (!paymentUrl) {
         throw new Error(
-          'BDGate did not return a payment URL. Please check the backend BDGate response.',
+          'EPS did not return a payment URL. Please check the EPS payment configuration.',
         );
       }
 
@@ -789,7 +789,7 @@ const AuctionSheetsPageContent = () => {
                 {isCreatingOrder
                   ? 'Creating order...'
                   : isStartingPayment
-                    ? 'Opening BDGate...'
+                    ? 'Opening EPS...'
                     : 'Purchase'}
               </button>
             </form>

@@ -3,7 +3,7 @@ import React from 'react';
 import { Modal, Typography, Button, Row, Col } from 'antd';
 import { LuPrinter } from 'react-icons/lu';
 import { FaRegCopy } from 'react-icons/fa';
-import BDGate from '@/components/Cart/BDGate';
+import EPS from '@/components/Cart/EPS';
 import { IOrder } from '@/Interface/order';
 
 const { Title, Text } = Typography;
@@ -45,7 +45,7 @@ const PaymentModal: React.FC<OrderSummaryModalProps> = ({
               Secure Payment Method
             </Title>
             <div className="flex flex-col gap-4">
-              <BDGate data={order} setPaymentStatus={setPaymentStatus} />
+              <EPS data={order} setPaymentStatus={setPaymentStatus} />
             </div>
           </div>
         </Col>

@@ -25,7 +25,7 @@ export default function Success() {
       paymentStatus: "PAID",
       transactionId: session_id,
       order,
-      paymentMethod: "bdgate",
+      paymentMethod: "eps",
     };
 
     const makePayment = async () => {

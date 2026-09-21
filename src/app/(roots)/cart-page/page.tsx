@@ -1,6 +1,6 @@
 "use client";
 
-import BDGate from "@/components/Cart/BDGate";
+import EPS from "@/components/Cart/EPS";
 import { useOrderQuery } from "@/Redux/api/orderApi";
 import { Col, Row } from "antd";
 import { useState } from "react";
@@ -20,12 +20,12 @@ const CheckoutPage = ({ params }: any) => {
           <Row gutter={{ xs: 24, xl: 8, lg: 8, md: 24 }}>
             <Col span={12} >
 
-              <h3>BDGate Payment</h3>
+              <h3>EPS Payment</h3>
 
               <Row gutter={20} className=" bg-white my-4 p-8">
                 <Col span={24}>
                   <div>
-                    <BDGate
+                    <EPS
                       data={order}
                       setPaymentStatus={setPaymentStatus}
                     />

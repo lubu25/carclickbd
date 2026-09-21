@@ -13,7 +13,7 @@ const isPublicAuctionSheetRequest = (config?: { url?: string }) => {
   const url = config?.url || '';
   return (
     url.includes('/auction-sheet') ||
-    url.includes('/payment/bdgate/auction-sheet')
+    url.includes('/payment/eps/auction-sheet')
   );
 };
 

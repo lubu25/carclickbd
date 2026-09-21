@@ -1,49 +1,44 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Button, Result, Spin, message } from 'antd';
 import { ResultStatusType } from 'antd/es/result';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FileSearch } from 'lucide-react';
-import {
-  useSyncBdGatePaymentStatusMutation,
-  useSyncEpsPaymentStatusMutation,
-} from '@/Redux/api/paymentApi';
 
 function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status');
   const type = searchParams.get('type');
-  const provider = searchParams.get('provider');
   const token = searchParams.get('token') || searchParams.get('session_token');
   const chassis = searchParams.get('chassis') || '';
   const paymentId = searchParams.get('payment_id') || '';
   const isAuctionSheetPayment = type === 'auction-sheet';
-  const [syncBdGatePaymentStatus, { isLoading: isSyncing }] =
-    useSyncBdGatePaymentStatusMutation();
-  const [syncEpsPaymentStatus] = useSyncEpsPaymentStatusMutation();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (isAuctionSheetPayment || !token || token === '{session_token}') return;
 
     const verifyPayment = async () => {
-      if (provider === 'eps') {
-        await syncEpsPaymentStatus(token).unwrap();
-        return;
+      setIsSyncing(true);
+      const response = await fetch(`/api/eps/status/${encodeURIComponent(token)}`);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Could not verify EPS payment status');
       }
-
-      await syncBdGatePaymentStatus(token).unwrap();
+      setIsSyncing(false);
     };
 
     verifyPayment().catch((error: any) => {
       message.error(
         error?.data?.message ||
           error?.message ||
-          `Could not verify ${provider === 'eps' ? 'EPS' : 'BDGate'} payment status`,
+          'Could not verify EPS payment status',
       );
+      setIsSyncing(false);
     });
-  }, [isAuctionSheetPayment, provider, syncBdGatePaymentStatus, syncEpsPaymentStatus, token]);
+  }, [isAuctionSheetPayment, token]);
 
   useEffect(() => {
     if (status !== 'success' || !isAuctionSheetPayment) return;
@@ -72,19 +67,15 @@ function PaymentPageContent() {
     status === 'success'
       ? isAuctionSheetPayment
         ? 'Payment return received'
-        : provider === 'eps'
-          ? 'EPS payment submitted successfully'
-          : 'Payment submitted successfully'
+        : 'EPS payment submitted successfully'
       : status === 'cancelled'
         ? 'Payment cancelled'
         : 'Payment was not completed';
   const resultSubTitle =
     status === 'success' && isAuctionSheetPayment
-      ? 'Payment return received. Confirming BDGate payment and opening the protected download...'
+      ? 'Payment return received. Confirming EPS payment and opening the protected download...'
       : status === 'success'
-        ? provider === 'eps'
-          ? 'EPS has received your payment request. Your order will update after gateway confirmation.'
-          : 'BDGate has received your payment request. Your order will update after gateway confirmation.'
+        ? 'EPS has received your payment request. Your order will update after gateway confirmation.'
         : 'You can return and try the payment again.';
 
   return (

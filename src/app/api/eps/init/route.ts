@@ -18,12 +18,13 @@ export async function POST(request: Request) {
       if (!value) throw new Error(`Missing ${name} EPS setting`);
       return value;
     };
-    const epsBaseUrl = (body.gateway_mode === "live" ? config.liveApiBaseUrl : config.apiBaseUrl).replace(/\/$/, "");
+    const baseUrl = (body.gateway_mode === "live" ? config.liveApiBaseUrl : config.apiBaseUrl).replace(/\/$/, "");
     const replaceTokens = (template: string, fallback: string, transactionId: string) =>
       (template || fallback)
         .replaceAll("{token}", encodeURIComponent(transactionId))
         .replaceAll("{order}", encodeURIComponent(String(body.order || "")));
-    const authResponse = await fetch(`${epsBaseUrl}/v1/Auth/GetToken`, {
+
+    const authResponse = await fetch(`${baseUrl}/v1/Auth/GetToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-hash": required(config.authHash, "auth hash") },
       body: JSON.stringify({
@@ -34,16 +35,19 @@ export async function POST(request: Request) {
     });
     const authPayload = await authResponse.json();
     const token = readValue(authPayload, "token", "Token", "access_token", "accessToken");
-
     if (!authResponse.ok || !token) {
       return NextResponse.json({ message: "EPS authentication failed", details: authPayload }, { status: 502 });
     }
 
-    const merchantTransactionId = body.merchantTransactionId || `CCBD-${Date.now()}`;
     const amount = Number(body.amount || 0);
-    if (amount < config.minimumAmount || amount > config.maximumAmount) {
-      return NextResponse.json({ message: `EPS payment amount must be between ${config.minimumAmount} and ${config.maximumAmount} BDT` }, { status: 400 });
+    if (!Number.isFinite(amount) || amount < config.minimumAmount || amount > config.maximumAmount) {
+      return NextResponse.json(
+        { message: `EPS payment amount must be between ${config.minimumAmount} and ${config.maximumAmount} BDT` },
+        { status: 400 },
+      );
     }
+
+    const merchantTransactionId = body.merchantTransactionId || `CCBD-${Date.now()}`;
     const initPayload = {
       storeId: required(config.storeId, "store ID"),
       merchantTransactionId,
@@ -85,19 +89,17 @@ export async function POST(request: Request) {
       ProductList: [],
     };
 
-    const initResponse = await fetch(`${epsBaseUrl}/v1/EPSEngine/InitializeEPS`, {
+    const initResponse = await fetch(`${baseUrl}/v1/EPSEngine/InitializeEPS`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "x-hash": required(config.initHash, "initialize hash"),
-      },
+      headers: Object.assign(
+        { "Content-Type": "application/json", "x-hash": required(config.initHash, "initialize hash") },
+        { Authorization: ["Bearer", token].join(" ") },
+      ),
       body: JSON.stringify(initPayload),
       cache: "no-store",
     });
     const initResult = await initResponse.json();
     const paymentUrl = readValue(initResult, "payment_url", "paymentUrl", "redirectUri", "redirectUrl", "checkout_url");
-
     if (!initResponse.ok || !paymentUrl) {
       return NextResponse.json({ message: "EPS payment URL was not returned", details: initResult }, { status: 502 });
     }

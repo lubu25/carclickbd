@@ -20,15 +20,6 @@ const paymentApi = baseApi.injectEndpoints({
       providesTags: ['payment'],
     }),
 
-    initBdGatePayment: build.mutation({
-      query: (items: any) => ({
-        url: `${PAYMENT}/bdgate/init`,
-        method: 'POST',
-        data: items,
-      }),
-      invalidatesTags: ['payment'],
-    }),
-
     initEpsPayment: build.mutation({
       query: (items: any) => ({
         url: `${PAYMENT}/eps/init`,
@@ -38,22 +29,14 @@ const paymentApi = baseApi.injectEndpoints({
       invalidatesTags: ['payment'],
     }),
 
-    initBdGateAuctionSheetPayment: build.mutation({
+    initEpsAuctionSheetPayment: build.mutation({
       query: (items: any) => ({
-        url: `${PAYMENT}/bdgate/auction-sheet`,
+        url: `${PAYMENT}/eps/auction-sheet`,
         method: 'POST',
         data: items,
         timeout: 90000,
       }),
       invalidatesTags: ['payment'],
-    }),
-
-    syncBdGatePaymentStatus: build.mutation({
-      query: (token: string) => ({
-        url: `${PAYMENT}/bdgate/status/${token}`,
-        method: 'GET',
-      }),
-      invalidatesTags: ['payment', 'order'],
     }),
 
     syncEpsPaymentStatus: build.mutation({
@@ -64,9 +47,9 @@ const paymentApi = baseApi.injectEndpoints({
       invalidatesTags: ['payment', 'order'],
     }),
 
-    getBdGateAuctionSheetPaymentStatus: build.query({
+    getEpsAuctionSheetPaymentStatus: build.query({
       query: (paymentId: string) => ({
-        url: `${PAYMENT}/bdgate/auction-sheet/status/${paymentId}`,
+        url: `${PAYMENT}/eps/auction-sheet/status/${paymentId}`,
         method: 'GET',
       }),
       providesTags: ['payment', 'auctionSheet'],
@@ -85,12 +68,10 @@ const paymentApi = baseApi.injectEndpoints({
 
 export const {
   useGetPaymentQuery,
-  useInitBdGatePaymentMutation,
   useInitEpsPaymentMutation,
-  useInitBdGateAuctionSheetPaymentMutation,
-  useSyncBdGatePaymentStatusMutation,
+  useInitEpsAuctionSheetPaymentMutation,
   useSyncEpsPaymentStatusMutation,
-  useLazyGetBdGateAuctionSheetPaymentStatusQuery,
+  useLazyGetEpsAuctionSheetPaymentStatusQuery,
   useCreatePaymentMutation,
 } = paymentApi;
 
