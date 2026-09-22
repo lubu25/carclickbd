@@ -22,6 +22,8 @@ export type EpsServerConfig = {
   maximumAmount: number;
   shortDescription: string;
   customerInstructions: string;
+  enabled: boolean;
+  mode: 'sandbox' | 'live';
 };
 
 const configPath = path.join(process.cwd(), ".data", "eps-config.json");
@@ -47,6 +49,8 @@ const defaultConfig = (): EpsServerConfig => ({
   maximumAmount: 500000,
   shortDescription: "Pay securely through EPS.",
   customerInstructions: "You will be redirected to EPS to complete payment.",
+  enabled: true,
+  mode: "sandbox",
 });
 
 export const getEpsConfig = async (): Promise<EpsServerConfig> => {
@@ -65,6 +69,8 @@ export const getEpsConfig = async (): Promise<EpsServerConfig> => {
       authHash: stored.authHash || defaults.authHash,
       initHash: stored.initHash || defaults.initHash,
       storeId: stored.storeId || defaults.storeId,
+      enabled: stored.enabled !== undefined ? stored.enabled : defaults.enabled,
+      mode: stored.mode || defaults.mode,
     };
   } catch {
     return defaultConfig();

@@ -83,6 +83,7 @@ const superRoutes: IDNavMenuItem[] = [
     children: [
       { label: "Header Slider", route: "/admin/header-carousel" },
       { label: "Website Content", route: "/admin/web-content" },
+      { label: "Product Media", route: "/admin/product-media" },
     ],
   },
   {

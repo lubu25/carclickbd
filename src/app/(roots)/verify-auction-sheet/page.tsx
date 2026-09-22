@@ -16,7 +16,7 @@ const VerifyAuctionSheetPage = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const chassis = chassisNo.trim();
+    const chassis = chassisNo.trim().toUpperCase();
     setSearchError("");
 
     if (!chassis) {
@@ -26,7 +26,7 @@ const VerifyAuctionSheetPage = () => {
 
     try {
       const response = await checkChassis(chassis).unwrap();
-      const lookup = response?.data?.data || response?.data;
+      const lookup = response?.data?.data || response?.data || response;
 
       if (!lookup?.found) {
         setSearchError(

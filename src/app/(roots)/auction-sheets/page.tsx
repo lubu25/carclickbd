@@ -220,12 +220,12 @@ const AuctionSheetsPageContent = () => {
     downloadLink.remove();
   }, [downloadUrl, isPaymentPaid, paymentId]);
 
-  const reportEnvelope = data?.data;
+  const reportEnvelope = data?.data || data;
   const reportData = reportEnvelope?.data || reportEnvelope;
   const report = reportData?.report;
   const reportSource = Array.isArray(report) ? report[0] : report;
   const reportRows = buildReportRows(report);
-  const found = Boolean(reportData?.found);
+  const found = Boolean(reportData?.found || reportEnvelope?.found);
   const model = getNestedValue(reportSource, [
     'model',
     'car_model',

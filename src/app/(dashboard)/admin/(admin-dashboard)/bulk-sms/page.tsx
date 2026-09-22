@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Button, Table, Space, Tag, Select, InputNumber, message, Alert, Typography } from 'antd';
 import { SendOutlined, PhoneOutlined, UserOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 // import { cn } from '@/lib/utils'; // Removed cn import
-import { useForm } from 'antd/lib/form/Form';
 
 interface UserGroup {
   id: string;
@@ -22,7 +21,7 @@ interface SMSLog {
 }
 
 const BulkSMSPage = () => {
-  const [form] = useForm<{
+  const [form] = Form.useForm<{
     message: string;
     recipientsType: 'all' | 'group' | 'numbers';
     recipientGroup?: string;

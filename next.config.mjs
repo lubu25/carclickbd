@@ -37,6 +37,14 @@ const nextConfig = {
       "cdn.pixabay.com"
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "https://carclickbd-backend.jdmcarworld.com/api/v1/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
