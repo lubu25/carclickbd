@@ -1,0 +1,473 @@
+[
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-sGlPfmzCQ3-(edit).jpg?t=172806568839",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-OsV1YWd-Gd-(edit).jpg?t=172806573766",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-iwriM16A4u-(edit).jpg?t=172806577833",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-ky-YwNU4Vm-(edit).jpg?t=172806582153",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-X4-GqxmJd4-(edit).jpg?t=172806410561",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-EuW8nVFGlc-(edit).jpg?t=172806413240",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-CiN15UkQhJ-(edit).jpg?t=172806418765",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-hd7q7z-XKI-(edit).jpg?t=172806422556",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/s-HLIbOj9SNki.jpeg?t=172752472127",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-jfBMoQvu414.jpeg?t=172799723714",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/s-1d0Vz6YELY.jpeg?t=172752467410",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-6AbYzNTaoH9.JPG?t=172773746188",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-BqsZMPoNcT.jpeg?t=172772769007",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-oXFa4ZFkUqZ.jpeg?t=172772769742",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-ltcov1wGaz.jpeg?t=172764776095",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/b6cef1067b94b682d738bd49c4746d5c36639bec/photos/3qmpxYy3-RlvhR4dkIX5.jpeg?t=172764775078"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  },
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=1800,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-s_d3kAmAAG-(edit).jpg?t=172867429178",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-uLVrBOQqRK-(edit).jpg?t=172867432712",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-6qcY0oKouc-(edit).jpg?t=172867435518",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-l8VZkTjhhS-(edit).jpg?t=172867439581",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-h7FixPS2hX-(edit).jpg?t=172867443695",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-nHiB4CUSTi-(edit).jpg?t=172867351978",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/3yQ1jm2a-BINQ_DAybq.jpeg?t=172866626618"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  },
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=1800,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/9n0Mk1yl-v5Yu9ndeQz-(edit).jpg?t=172832993275",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/9n0Mk1yl-mzVL-TQzM8-(edit).jpg?t=172840238664",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/9n0Mk1yl-sWw7OzT-j0-(edit).jpg?t=172832995863",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/9n0Mk1yl-skYU5K_lZD-(edit).jpg?t=172832998225",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/ee7f173e46ec801a48d1673c50f9cebaa1bf2854/photos/9n0Mk1yl-ZRPYrYUq4m-(edit).jpg?t=172833000962",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8bbf0f64fbfad81f6867cff798d92495738b23a7/photos/3qmpxYy3-EuW8nVFGlc-(edit).jpg?t=172806413240",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/438ad923cef6d8239e95d61e7d6849486bae11d9/photos/9n0Mk1yl-vqLiznSjqv-(edit).jpg?t=172834065099"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  },
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=1800,quality=70/f50baa0fded5bb62b35f8553a743bb81347efcf4/photos/37G42Bxq-1hojqq8kMy-(edit)-yfWAHCGYGb.jpeg?t=172812314936",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/f50baa0fded5bb62b35f8553a743bb81347efcf4/photos/37G42Bxq-BDavsS5AKt-(edit)-l_VhXcfovI.jpeg?t=172812314639",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/438ad923cef6d8239e95d61e7d6849486bae11d9/photos/37G42Bxq-GXHDkQ56rH-(edit).jpg?t=172851385033",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/438ad923cef6d8239e95d61e7d6849486bae11d9/photos/37G42Bxq-2TrvbTtbod-(edit).jpg?t=172851382795",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/f50baa0fded5bb62b35f8553a743bb81347efcf4/photos/37G42Bxq-DK0dhQpQOV-(edit)-qPNNt7Dq5X.jpeg?t=172812314635"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  },
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=1800,quality=70/20309e251cb7341d1fb94cb5d4546882260d2202/photos/KdRXXGvL-W24mMyl10e-(edit).jpg?t=172842629735",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/20309e251cb7341d1fb94cb5d4546882260d2202/photos/KdRXXGvL-Dw8AB7MHdW-(edit).jpg?t=172842627160",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/20309e251cb7341d1fb94cb5d4546882260d2202/photos/KdRXXGvL-z59DtJ5RCp-(edit).jpg?t=172842625353",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/20309e251cb7341d1fb94cb5d4546882260d2202/photos/KdRXXGvL-z0quSbRfMA-(edit).jpg?t=172842635047",
+        "https://media.carsandbids.com/cdn-cgi/image/width=542,quality=70/20309e251cb7341d1fb94cb5d4546882260d2202/photos/KdRXXGvL-XYGbcsDKbS-(edit).jpg?t=172842637248"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  },
+  {
+    "_id": "abc03853479587349875ref",
+    "photos": {
+      "mainPhoto": "https://media.carsandbids.com/cdn-cgi/image/width=1800,quality=70/da4b9237bacccdf19c0760cab7aec4a8359010b0/photos/rbzQ8072-pVtgyD4Gjj-(edit).jpg?t=172894619012",
+      "others": [
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/1477bbe21e8d6b5e719c7c3ccab577fd47dd8cc3/photos/rbzQ8072-ndLk2KNs54-(edit).jpg?t=172876928398",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/8db9d2df4794189908e1f7a4e14fe9f1a94d1c1a/photos/s-945YMw0067x.jpg?t=172773565911",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/1477bbe21e8d6b5e719c7c3ccab577fd47dd8cc3/photos/rbzQ8072-bzP59UiexD-(edit).jpg?t=172876962425",
+        "https://media.carsandbids.com/cdn-cgi/image/width=2080,quality=80/1477bbe21e8d6b5e719c7c3ccab577fd47dd8cc3/photos/rbzQ8072-ws_FTaVZWk-(edit).jpg?t=172876967317"
+      ]
+    },
+    "make": "BMW",
+    "model": "# Seris",
+    "mileage": "103,000 Miles Shown - TMU",
+    "vin": "w392809abb34dkf",
+    "titleStatus": "Clean (VA)",
+    "location": "Flushing, NY 11355",
+    "seller": {
+      "id": "abc329879457930238964",
+      "name": "Masum Rana",
+      "profilePhoto": ""
+    },
+    "engine": "3.0L 16",
+    "drivetrain": "Rear-Wheel drive",
+    "transmission": "Manual (5-Speed)",
+    "bodyStyle": "Sedan",
+    "exteriorColor": "Alpine white",
+    "interiorColor": "blue",
+    "sellerType": "Private Party",
+    "highlights": [
+      "This M3 features the desirable 6-speed manual transmission, and its odometer currently displays approximately 26,400 miles.",
+      "The attached Carfax history report contains a gap from 2009 to 2015, though it lists no accidents or mileage discrepancies for the given time period.",
+      "Carfax report gap: 2009 to 2015, no accidents or mileage discrepancies",
+      "According to the build sheet provided in the gallery, factory equipment includes the Cold Weather Package, 19-inch Style 67 wheels, a power-operated soft top, Nappa leather upholstery, power-adjustable front sport seats, and a Harman/Kardon sound system. The selling dealer reports no modifications.",
+
+      "The third-generation M3 made its debut for the 2000 model year as the quickest and most powerful evolution of the E46 3 Series. Offered as a coupe and as a convertible, it received a high-revving straight-6 engine, suspension improvements, and a muscular-looking exterior design. Production ended in 2006.",
+      "Power comes from a 3.2-liter straight-6, rated at 333 horsepower and 262 lb-ft of torque. Output is sent to the rear wheels via a 6-speed manual transmission."
+    ],
+    "equipment": [
+      "Cold Weather Package (heated front seats, headlight washers, ski bag)",
+      "19-inch Style 67 wheels",
+      "Dynamic Stability Control (DSC)",
+      "Xenon headlights",
+      "Fog lights",
+      "Power-retractable soft top",
+      "Nappa leather upholstery",
+      "Power-adjustable front sport seats",
+      "Aluminum pedals",
+      "Automatic climate control"
+    ],
+    "modification": ["modification1", "modification2", "modification3"],
+    "resentServiceHistory": [
+      "May 2022 (25,639 miles): Brake fluid flushed/changed, brakes serviced, power steering hose(s)/line(s) replaced",
+      "September 2020 (25,321 miles): Brake fluid and power steering flushed",
+      "The seller reports that the following services have been performed in preparation for the sale.Fluids changed."
+    ],
+    "otherItemsIncludedInSale": [
+      "2 Keys",
+      "Owners's manaual",
+      "Hard top and holder",
+      "Car Cover",
+      "Floor mats"
+    ],
+    "ownershipHistory": "The seller report that they purchased this 911 in juyly 2021 and have added aproximatily 3,0000 miles since.",
+    "sellerNotes": [
+      "Paint meter readings are provided in the Other section of the gallery."
+    ],
+    "videos": [],
+    "views": 10,
+    "bids": {
+      "bidsHistory": [],
+      "minBid": 4500,
+      "maxBid": 9000
+    },
+    "comments": []
+  }
+]

@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+@layer utilities {
+  /* Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: rgb(232, 241, 250);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #0f172a;
+    border-radius: 5px;
+  }
+}
+
+.table-container {
+  overflow-x: auto; /* Allows horizontal scrolling if needed */
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .ant-layout,
+  .ant-card,
+  .ant-form,
+  .ant-table-wrapper,
+  .ant-table-container {
+    max-width: 100%;
+  }
+
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ant-table {
+    font-size: 12px; /* Adjust font size for smaller screens */
+  }
+  .ant-table th,
+  .ant-table td {
+    padding: 8px; /* Adjust padding for smaller screens */
+  }
+
+  .ant-card-body,
+  .ant-card-head {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .ant-form-item {
+    margin-bottom: 14px;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 24px);
+  }
+
+  .ant-modal-content {
+    padding: 16px !important;
+  }
+
+  .ant-tooltip {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .ant-tooltip-inner {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  .ant-picker,
+  .ant-select,
+  .ant-input,
+  .ant-input-number,
+  .ant-input-number-affix-wrapper {
+    width: 100% !important;
+  }
+}
+
+@keyframes flicker {
+  0% {
+    color: rgb(1, 87, 1);
+  }
+  50% {
+    color: rgb(5, 5, 24);
+  }
+  100% {
+    color: green;
+  }
+}
+
+.flicker-text {
+  animation: flicker 0.25s infinite alternate; /* Faster flicker */
+  transition: animation 0.2s ease-in-out; /* Smooth transition for stopping animation */
+}
+
+.flicker-text:hover {
+  animation-play-state: paused; /* Pause the animation on hover */
+}
+
+.slow-flicker-text {
+  animation: flicker 3s infinite alternate; /* Slower flicker */
+  transition: animation 0.2s ease-in-out; /* Smooth transition for stopping animation */
+}
+
+.slow-flicker-text:hover {
+  animation-play-state: paused; /* Pause the animation on hover */
+}
+
+@keyframes verify-shine {
+  0%,
+  58% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(190px);
+    opacity: 0;
+  }
+}
+
+@keyframes verify-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+    opacity: 0.9;
+  }
+  45% {
+    box-shadow: 0 0 0 5px rgba(229, 9, 20, 0.18);
+    opacity: 1;
+  }
+}
+
+
+
+@keyframes verify-text-flicker {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+  }
+  45% {
+    opacity: 0.82;
+    text-shadow: 0 0 14px rgba(255, 255, 255, 0.9);
+  }
+  58% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes redGlowPulse {
+  0% {
+    box-shadow:
+      0 0 0 rgba(255, 0, 0, 0),
+      0 0 0 rgba(255, 0, 0, 0),
+      0 0 0 rgba(255, 0, 0, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 14px rgba(255, 0, 0, 0.95),
+      0 0 32px rgba(255, 0, 0, 0.72),
+      0 0 58px rgba(255, 0, 0, 0.52),
+      0 0 88px rgba(255, 0, 0, 0.34);
+  }
+  100% {
+    box-shadow:
+      0 0 0 rgba(255, 0, 0, 0),
+      0 0 0 rgba(255, 0, 0, 0),
+      0 0 0 rgba(255, 0, 0, 0);
+  }
+}
+
+/* Drawer glass effect */
+.glass-drawer .ant-drawer-content {
+  background: rgba(2, 2, 2, 0.8) !important;
+}
+.glass-drawer .ant-drawer-header,
+.glass-drawer .ant-drawer-body {
+  background: transparent !important;
+}
