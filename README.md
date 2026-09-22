@@ -1,37 +1,171 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<div align="center">
 
-## Getting Started
+# 🚘 CarClickBD
 
-First, run the development server:
+### Modern Automotive Marketplace Frontend
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**Designed & Developed by [Shahed IT](https://shahedit.com/)**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+<p>
+  <img src="https://img.shields.io/badge/Status-Active%20Development-6C63FF?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Next.js-Modern-000000?style=for-the-badge&logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-Frontend-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-Development-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+</p>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<p>
+  <a href="https://shahedit.com/">🌐 Shahed IT</a>
+  •
+  <a href="#-features">Features</a>
+  •
+  <a href="#-installation">Installation</a>
+  •
+  <a href="#-development-workflow">Development</a>
+  •
+  <a href="#-deployment">Deployment</a>
+</p>
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+</div>
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🚘 About CarClickBD
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**CarClickBD** is a modern automotive marketplace frontend designed to provide a clean, fast and user-friendly experience for discovering vehicles online.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+The platform is being developed with a focus on:
 
-## Deploy on Vercel
+- 🚗 Vehicle discovery
+- 🔎 Search & filtering
+- 📋 Vehicle information
+- 🖼️ High-quality vehicle imagery
+- 📱 Responsive design
+- ⚡ Fast performance
+- 🧩 Reusable components
+- 🔐 Secure development practices
+- 🚀 Scalable architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The project is actively developed and maintained by **Shahed IT**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-# CarEBid_Fontend
+---
+
+## 🏢 Development
+
+### Developed & Maintained By
+
+# **Shahed IT**
+
+> **Smart IT Solutions**
+
+Shahed IT is responsible for the development, design implementation, technical improvements, maintenance and ongoing development of the CarClickBD platform.
+
+🌐 **Website:**  
+https://shahedit.com/
+
+---
+
+# ✨ Features
+
+### 🚗 Vehicle Marketplace
+
+Browse and discover vehicles through a modern marketplace interface.
+
+### 🔎 Advanced Search
+
+Search vehicles based on relevant information and marketplace requirements.
+
+### 🎛️ Smart Filtering
+
+The architecture supports filters such as:
+
+- Brand
+- Model
+- Price
+- Year
+- Mileage
+- Fuel Type
+- Transmission
+- Body Type
+- Location
+
+### 🖼️ Vehicle Gallery
+
+High-quality vehicle imagery and visual presentation for listings.
+
+### 📱 Fully Responsive
+
+Designed to work across:
+
+- 📱 Mobile
+- 📲 Tablet
+- 💻 Laptop
+- 🖥️ Desktop
+- 🖥️ Large Displays
+
+### ⚡ Performance Focused
+
+The project follows modern web development practices to maintain:
+
+- Fast loading
+- Optimized assets
+- Efficient rendering
+- Clean component architecture
+- Minimal unnecessary dependencies
+
+### 🧩 Reusable Components
+
+The interface is structured around reusable components to make future development easier and more maintainable.
+
+---
+
+# 🛠️ Technology Stack
+
+<div align="center">
+
+| Technology | Purpose |
+|---|---|
+| ⚛️ React | User Interface |
+| ▲ Next.js | Application Framework |
+| 🔷 TypeScript | Type-safe Development |
+| 🟢 Node.js | Runtime Environment |
+| 📦 npm | Package Management |
+| 🧹 ESLint | Code Quality |
+| 🔀 Git | Version Control |
+| 🐙 GitHub | Source Control |
+
+</div>
+
+---
+
+# 📁 Project Structure
+
+```text
+CarClickBD/
+│
+├── 📁 .github/
+│   └── GitHub workflows
+│
+├── 📁 .vscode/
+│   └── VS Code configuration
+│
+├── 📁 public/
+│   ├── images/
+│   ├── icons/
+│   └── static assets
+│
+├── 📁 src/
+│   ├── components/
+│   ├── pages/
+│   ├── layouts/
+│   ├── hooks/
+│   ├── lib/
+│   ├── services/
+│   └── styles/
+│
+├── 📄 package.json
+├── 📄 package-lock.json
+├── 📄 next.config.*
+├── 📄 eslint.config.*
+├── 📄 .gitignore
+├── 📄 README.md
+└── 📄 ...
