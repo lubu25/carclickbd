@@ -1,11 +1,8 @@
 import { getBaseUrl } from "@/helpers/config/envConfig";
 
 const getApiOrigin = () => {
-  try {
-    return new URL(getBaseUrl()).origin;
-  } catch {
-    return "";
-  }
+  // Always return the absolute backend origin to avoid rewrite issues on Hostinger
+  return "https://carclickbd-backend.jdmcarworld.com";
 };
 
 export const getMediaUrl = (url?: string | null) => {
