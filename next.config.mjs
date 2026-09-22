@@ -5,6 +5,18 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'https://carclickbd-backend.jdmcarworld.com/api/v1/:path*',
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'https://carclickbd-backend.jdmcarworld.com/uploads/:path*',
+      },
+    ];
+  },
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -34,7 +46,8 @@ const nextConfig = {
       "encrypted-tbn0.gstatic.com",
       "www.pngmart.com",
       "www.pngall.com",
-      "cdn.pixabay.com"
+      "cdn.pixabay.com",
+      "carclickbd-backend.jdmcarworld.com"
     ],
   },
 };
