@@ -4,14 +4,42 @@ export const auctionSheetApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getAuctionSheetReport: build.query({
       queryFn: async (chassis: string, _queryApi, _extraOptions, fetchWithBQ) => {
-        // Use standard fetch to bypass the baseApi's baseUrl and auth headers
         try {
-          const response = await fetch(`https://jpcenter.ru/api/report?chassis=${encodeURIComponent(chassis)}`);
+          const response = await fetch(`https://jpcenter.ru/api/report?chassis=${encodeURIComponent(chassis)}&code=3574926_42351f64ee17f62f8729d3d527c35dca`);
           if (!response.ok) {
             return { error: { status: response.status, data: await response.text() } };
           }
-          const data = await response.json();
-          return { data };
+          const xmlText = await response.text();
+          
+          if (typeof window !== "undefined" && window.DOMParser) {
+            const parser = new window.DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            
+            const errorNode = xmlDoc.querySelector("error");
+            if (errorNode && errorNode.textContent === "not found") {
+              return { data: { found: false } };
+            }
+            
+            const rowNodes = xmlDoc.querySelectorAll("row");
+            const rows = Array.from(rowNodes).map(row => {
+              const obj: any = {};
+              Array.from(row.children).forEach(child => {
+                obj[child.tagName] = child.textContent;
+              });
+              return obj;
+            });
+            
+            return { 
+              data: { 
+                found: rows.length > 0, 
+                report: rows, 
+                download_available: rows.length > 0,
+                chassis 
+              } 
+            };
+          } else {
+             return { error: { status: 'PARSER_ERROR', error: 'DOMParser is not available' } };
+          }
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: error.message } };
         }

@@ -15,6 +15,10 @@ const nextConfig = {
         source: '/uploads/:path*',
         destination: 'https://carclickbd-backend.jdmcarworld.com/uploads/:path*',
       },
+      {
+        source: '/api/jpcenter/:path*',
+        destination: 'https://jpcenter.ru/api/:path*',
+      },
     ];
   },
   images: {
