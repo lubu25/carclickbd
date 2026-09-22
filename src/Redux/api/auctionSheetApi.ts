@@ -9,14 +9,22 @@ export const auctionSheetApi = baseApi.injectEndpoints({
           if (!response.ok) {
             return { error: { status: response.status, data: await response.text() } };
           }
-          const xmlText = await response.text();
+          const rawXmlText = await response.text();
+          // Sanitize XML: replace unescaped '&' with '&amp;' to prevent DOMParser from failing
+          const xmlText = rawXmlText.replace(/&(?!amp;|lt;|gt;|apos;|quot;)/g, '&amp;');
           
           if (typeof window !== "undefined" && window.DOMParser) {
             const parser = new window.DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
             
-            const errorNode = xmlDoc.querySelector("error");
-            if (errorNode && errorNode.textContent === "not found") {
+            const errorNode = xmlDoc.querySelector("parsererror");
+            if (errorNode) {
+              console.error("XML Parsing Error:", errorNode.textContent);
+              // Fallback or just continue to let it fail gracefully
+            }
+            
+            const notFoundNode = xmlDoc.querySelector("error");
+            if (notFoundNode && notFoundNode.textContent === "not found") {
               return { data: { data: { found: false } } };
             }
             

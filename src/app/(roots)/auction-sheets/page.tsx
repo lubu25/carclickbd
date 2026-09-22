@@ -221,7 +221,7 @@ const AuctionSheetsPageContent = () => {
   }, [downloadUrl, isPaymentPaid, paymentId]);
 
   const reportEnvelope = data?.data;
-  const reportData = reportEnvelope?.data || reportEnvelope;
+  const reportData = reportEnvelope?.data || reportEnvelope || data;
   const report = reportData?.report;
   const reportSource = Array.isArray(report) ? report[0] : report;
   const reportRows = buildReportRows(report);
@@ -234,11 +234,12 @@ const AuctionSheetsPageContent = () => {
   ]);
   const year = getNestedValue(reportSource, [
     'year',
+    'car_year',
     'production_year',
     'productionYear',
     'model_year',
   ]);
-  const color = getNestedValue(reportSource, ['color', 'colour']);
+  const color = getNestedValue(reportSource, ['car_color', 'color', 'colour']);
   const grade = getNestedValue(reportSource, [
     'grade',
     'auction_grade',
@@ -390,103 +391,75 @@ const AuctionSheetsPageContent = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
-                    Searched chassis number
-                  </p>
-                  <p className="mt-1 break-words text-xl font-black uppercase tracking-wide text-slate-950">
-                    {reportData?.chassis || chassis}
-                  </p>
-                </div>
-
-                <div className="grid gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left md:grid-cols-[1.05fr_0.95fr] md:p-5">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Download auction sheet"
-                    onClick={handleDownloadOrPurchase}
-                    onKeyDown={event => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        handleDownloadOrPurchase();
-                      }
-                    }}
-                    className="relative flex min-h-32 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-[#f5bd05] hover:shadow-[0_0_0_3px_rgba(245,189,5,0.18)] focus:outline-none focus:ring-2 focus:ring-[#f5bd05]"
-                  >
-                    {sheetImage ? (
-                      <Image
-                        src={sheetImage}
-                        alt={`Auction sheet preview for ${chassis}`}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="p-6 text-center">
-                        <FileSearch
-                          size={34}
-                          className="mx-auto text-[#003399]"
-                        />
-                        <p className="mt-3 text-sm font-bold text-slate-600">
-                          Auction sheet preview will appear when a record is
-                          available.
-                        </p>
-                      </div>
-                    )}
+              <div className="space-y-8">
+                <div className="space-y-4 text-center">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-[#e50914]">
+                      Click on the chassis image to get the true report
+                    </p>
+                    <p className="text-sm font-bold text-black">
+                      অকশন শীট ভ্যারিফাই করতে নিচের ছবিতে ক্লিক করুন ।
+                    </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700">
-                      {isFetching ? (
-                        'Checking'
-                      ) : found && downloadAvailable ? (
-                        <>
-                          <CheckCircle2 size={14} /> Available
-                        </>
-                      ) : found ? (
-                        'Report found — sheet pending'
+                  <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 border-2 border-[#4A90E2] p-6 sm:flex-row sm:items-start sm:p-8">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Download auction sheet"
+                      onClick={handleDownloadOrPurchase}
+                      className="relative flex h-[120px] w-full max-w-[260px] shrink-0 cursor-pointer items-center justify-center bg-white transition hover:opacity-80"
+                    >
+                      {sheetImage ? (
+                        <Image
+                          src={sheetImage}
+                          alt={`Auction sheet preview for ${chassis}`}
+                          fill
+                          className="object-contain"
+                          unoptimized
+                        />
                       ) : (
-                        'Request review'
+                        <div className="flex h-full w-full items-center justify-center border border-gray-300 p-4 text-center text-xs font-bold text-slate-500">
+                          Image preview
+                        </div>
                       )}
                     </div>
-                    <p className="text-2xl font-black text-slate-950">
-                      Model:{' '}
-                      <span className="uppercase text-[#e50914]">
-                        {model || 'Pending review'}
-                      </span>
-                    </p>
-                    <p className="text-2xl font-black text-slate-950">
-                      Year:{' '}
-                      <span className="uppercase text-[#e50914]">
-                        {year || 'Checking'}
-                      </span>
-                    </p>
-                    <p className="text-2xl font-black text-slate-950">
-                      Color:{' '}
-                      <span className="uppercase text-[#e50914]">
-                        {color || 'Checking'}
-                      </span>
-                    </p>
-                    <p className="text-2xl font-black text-slate-950">
-                      Grade:{' '}
-                      <span className="uppercase text-[#e50914]">
-                        {grade || 'Checking'}
-                      </span>
-                    </p>
+
+                    <div className="flex w-full flex-col space-y-4 text-left sm:w-auto">
+                      <p className="text-xl font-bold text-black md:text-2xl">
+                        Model:{' '}
+                        <span className="uppercase text-[#e50914]">
+                          {isFetching ? 'Checking...' : (model || 'N/A')}
+                        </span>
+                      </p>
+                      <p className="text-xl font-bold text-black md:text-2xl">
+                        Year:{' '}
+                        <span className="uppercase text-[#e50914]">
+                          {isFetching ? 'Checking...' : (year || 'N/A')}
+                        </span>
+                      </p>
+                      <p className="text-xl font-bold text-black md:text-2xl">
+                        Color:{' '}
+                        <span className="uppercase text-[#e50914]">
+                          {isFetching ? 'Checking...' : (color || 'N/A')}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleDownloadOrPurchase}
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-5 text-sm font-black text-slate-950 shadow-[0_14px_30px_rgba(245,189,5,0.25)] transition hover:-translate-y-0.5 hover:bg-[#e4ad00] sm:w-auto"
-                >
-                  {downloadAvailable
-                    ? 'Download Auction Sheet'
-                    : 'Auction Sheet Pending'}
-                  <ArrowRight size={17} />
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={handleDownloadOrPurchase}
+                    className="inline-flex h-12 w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-5 text-sm font-black text-slate-950 shadow-[0_14px_30px_rgba(245,189,5,0.25)] transition hover:-translate-y-0.5 hover:bg-[#e4ad00] sm:w-auto"
+                  >
+                    {downloadAvailable
+                      ? 'Download Auction Sheet'
+                      : 'Auction Sheet Pending'}
+                    <ArrowRight size={17} />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -667,132 +640,111 @@ const AuctionSheetsPageContent = () => {
       </section>
 
       {isPurchaseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm">
-          <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.35)]">
-            <button
-              type="button"
-              onClick={() => setIsPurchaseModalOpen(false)}
-              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100"
-              aria-label="Close purchase form"
-            >
-              <X size={18} />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+          <div className="relative max-h-[92vh] w-full max-w-4xl overflow-y-auto bg-white shadow-[0_30px_100px_rgba(15,23,42,0.35)]">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between bg-[#F5BD05] px-6 py-4">
+              <h2 className="text-xl font-medium text-black">Your Information</h2>
+              <button
+                type="button"
+                onClick={() => setIsPurchaseModalOpen(false)}
+                className="text-black hover:text-gray-800 transition"
+                aria-label="Close"
+              >
+                <X size={28} strokeWidth={3} />
+              </button>
+            </div>
 
-            <div className="bg-gradient-to-r from-slate-950 via-[#073b82] to-[#0057c2] p-6 text-white md:p-8">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#f5bd05]">
-                Auction sheet order
-              </p>
-              <h2 className="mt-3 pr-10 text-3xl font-black">
-                Download Auction Sheet
-              </h2>
-              <p className="mt-2 text-sm font-medium leading-6 text-blue-100">
-                Please provide your contact details before continuing to
-                payment.
-              </p>
-              <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">
-                  Chassis number
-                </p>
-                <p className="mt-1 break-words text-lg font-black uppercase text-white">
-                  {reportData?.chassis || chassis || 'Not provided'}
-                </p>
+            <div className="flex flex-col gap-8 p-6 md:flex-row md:p-8">
+              {/* Left Column */}
+              <div className="w-full md:w-1/2 flex flex-col gap-6">
+                <div className="border border-red-500 p-2">
+                  <p className="text-lg font-bold text-black">
+                    Payment Amount: <span className="text-red-500">800 BDT</span>
+                  </p>
+                </div>
+                
+                <div className="relative h-[180px] w-full max-w-[320px] bg-white border border-gray-300 flex items-center justify-center">
+                  {sheetImage ? (
+                    <Image
+                      src={sheetImage}
+                      alt="Chassis Image"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-sm font-bold text-gray-400">Image preview</span>
+                  )}
+                </div>
+
+                <div className="text-left font-bold text-black text-lg space-y-1">
+                  <p>Model: <span className="uppercase text-black">{model || 'N/A'}</span></p>
+                  <p>Year: <span className="uppercase text-black">{year || 'N/A'}</span></p>
+                  <p>Color: <span className="uppercase text-black">{color || 'N/A'}</span></p>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="w-full md:w-1/2">
+                <form id="purchaseForm" onSubmit={handlePurchaseSubmit} className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Your Name:</label>
+                    <input required name="name" type="text" placeholder="Name" className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05]" />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Your Email:</label>
+                    <input required name="email" type="email" placeholder="Insert Your Email" className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05]" />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Mobile Number:</label>
+                    <input required name="mobile" type="tel" placeholder="01XXXXXXXXX" className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05]" />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Country</label>
+                    <select className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05]">
+                      <option value="Bangladesh">Bangladesh</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Address:</label>
+                    <textarea required name="address" rows={3} placeholder="address" className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05] resize-none" />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 pt-2">
+                    <input required name="termsAccepted" type="checkbox" className="h-4 w-4" />
+                    <span className="text-sm font-bold text-black">
+                      I read and agree to the <a href="/terms-privacy-refund" className="text-blue-600 hover:underline">Terms and Policies</a>
+                    </span>
+                  </div>
+
+                  {purchaseError && (
+                    <div className="mt-4 rounded border border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-700">
+                      {purchaseError}
+                    </div>
+                  )}
+                </form>
               </div>
             </div>
 
-            <form
-              onSubmit={handlePurchaseSubmit}
-              className="space-y-5 p-6 md:p-8"
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">Name</span>
-                  <input
-                    required
-                    name="name"
-                    type="text"
-                    placeholder="Your full name"
-                    className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-sm font-semibold outline-none transition focus:border-[#003399] focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-bold text-slate-700">
-                    Email
-                  </span>
-                  <input
-                    required
-                    name="email"
-                    type="email"
-                    placeholder="example@email.com"
-                    className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-sm font-semibold outline-none transition focus:border-[#003399] focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-
-                <label className="block md:col-span-2">
-                  <span className="text-sm font-bold text-slate-700">
-                    Mobile Number
-                  </span>
-                  <input
-                    required
-                    name="mobile"
-                    type="tel"
-                    placeholder="+880..."
-                    className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-sm font-semibold outline-none transition focus:border-[#003399] focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-
-                <label className="block md:col-span-2">
-                  <span className="text-sm font-bold text-slate-700">
-                    Address
-                  </span>
-                  <textarea
-                    required
-                    name="address"
-                    rows={4}
-                    placeholder="Your address"
-                    className="mt-2 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold outline-none transition focus:border-[#003399] focus:ring-2 focus:ring-blue-100"
-                  />
-                </label>
-              </div>
-
-              <label className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <input
-                  required
-                  name="termsAccepted"
-                  type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-[#003399]"
-                />
-                <span className="text-sm font-semibold leading-6 text-slate-700">
-                  I agree to the{' '}
-                  <a
-                    href="/terms-privacy-refund"
-                    className="font-black text-[#003399] underline"
-                  >
-                    Terms and Policies
-                  </a>
-                  .
-                </span>
-              </label>
-
-              {purchaseError && (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-700">
-                  {purchaseError}
-                </div>
-              )}
-
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-3 bg-white px-6 py-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => setIsPurchaseModalOpen(false)}
+                className="px-6 py-2.5 bg-[#f0f0f0] text-black font-medium hover:bg-gray-200 transition"
+              >
+                Close
+              </button>
               <button
                 type="submit"
+                form="purchaseForm"
                 disabled={isPurchasing}
-                className="inline-flex h-13 min-h-13 w-full items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-6 py-4 text-base font-black text-slate-950 shadow-[0_14px_30px_rgba(245,189,5,0.28)] transition hover:-translate-y-0.5 hover:bg-[#e4ad00] disabled:cursor-not-allowed disabled:opacity-70"
+                className="px-6 py-2.5 bg-[#2980b9] text-white font-medium hover:bg-[#3498db] transition flex items-center gap-2"
               >
-                <CreditCard size={19} />
-                {isCreatingOrder
-                  ? 'Creating order...'
-                  : isStartingPayment
-                    ? 'Opening BDGate...'
-                    : 'Purchase'}
+                {isPurchasing ? 'Processing...' : 'Purchase'}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
