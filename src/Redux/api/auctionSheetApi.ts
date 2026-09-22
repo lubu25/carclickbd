@@ -24,7 +24,19 @@ export const auctionSheetApi = baseApi.injectEndpoints({
             const rows = Array.from(rowNodes).map(row => {
               const obj: any = {};
               Array.from(row.children).forEach(child => {
-                obj[child.tagName] = child.textContent;
+                const tag = child.tagName.toLowerCase();
+                const value = child.textContent;
+                
+                // Map the specific fields to what the frontend expects
+                if (tag === 'car_model') obj.model = value;
+                else if (tag === 'car_year') obj.year = value;
+                else if (tag === 'car_color') obj.color = value;
+                else if (tag === 'car_grade') obj.grade = value;
+                else if (tag === 'image') obj.image = value;
+                else if (tag !== 'color') {
+                  // Ignore the numeric <color> tag so it doesn't overwrite car_color
+                  obj[tag] = value;
+                }
               });
               return obj;
             });
