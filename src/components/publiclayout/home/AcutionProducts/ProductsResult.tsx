@@ -6,6 +6,7 @@ import ProductCard from "./ProductCard";
 import { IProduct } from "@/Interface/product";
 import { useGetAllProductQuery } from "@/Redux/api/productApi";
 import { AuctionProductsProps } from "@/types/products.types";
+import { useEffect, useState } from "react";
 
 const conditionQueryMap: Record<string, string> = {
   new: "New",
@@ -66,7 +67,46 @@ const ProductsResult = ({
   }, [isWinner, isDraft,isFeatured, searchParams]);
 
   const { data, isLoading } = useGetAllProductQuery(filters);
-  const products: IProduct[] = useMemo(() => data?.data || [], [data]);  
+  const rawProducts: IProduct[] = useMemo(() => data?.data || [], [data]);
+
+  const [localMediaMap, setLocalMediaMap] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    fetch("/api/local-products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data)) {
+          const mediaMap: Record<string, any> = {};
+          data.forEach((p: any) => {
+            const id = p._id || p.id;
+            if (id) {
+              mediaMap[id] = p;
+            }
+          });
+          setLocalMediaMap(mediaMap);
+        }
+      })
+      .catch((err) => console.error("Failed to load local products", err));
+  }, []);
+
+  const products: IProduct[] = useMemo(() => {
+    return rawProducts.map((product) => {
+      const localMedia = localMediaMap[product._id];
+      if (localMedia) {
+        return {
+          ...product,
+          photos: {
+            ...product.photos,
+            mainPhoto: localMedia.photos?.mainPhoto || product.photos?.mainPhoto,
+            others: localMedia.photos?.others && localMedia.photos.others.length > 0
+              ? localMedia.photos.others
+              : product.photos?.others,
+          },
+        };
+      }
+      return product;
+    });
+  }, [rawProducts, localMediaMap]);
   
 
   const sortedProducts = useMemo(() => {

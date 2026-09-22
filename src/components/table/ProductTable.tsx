@@ -49,6 +49,7 @@ import {
 import StatsCard from "./StatsCard";
 import ProductDetailsModal from "../Modal/ProductDetailsModal";
 import ProductCommentModal from "../Modal/ProductCommentModal";
+import BackupRestoreModal from "../Modal/BackupRestoreModal";
 import { getMediaUrl } from "@/utils/media";
 
 const { confirm } = Modal;
@@ -111,6 +112,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
   const [searchText, setSearchText] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
+  const [isBackupModalVisible, setIsBackupModalVisible] = useState(false);
   const [deleteProduct] = useDeleteProductMutation();
   const [toggleProductStatus] = useToggleProducrtStatusMutation();
   const [toggleProductFeatured] = useToggleProductFeaturedMutation();
@@ -517,13 +519,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
               Manage vehicles, pricing, availability, and listing quality.
             </p>
           </div>
-          <div className="w-full max-w-lg">
+          <div className="w-full max-w-lg flex items-center gap-2">
             <Input
               placeholder="Search by title, maker, model, price, year, location"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               className="w-full p-3 text-base"
             />
+            {isAdminProductTable && (
+              <Button
+                type="primary"
+                className="h-full py-3 bg-blue-600"
+                onClick={() => setIsBackupModalVisible(true)}
+              >
+                Backup & Restore
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -595,6 +606,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
       >
         {modalContent}
       </Modal>
+
+      {isAdminProductTable && (
+        <BackupRestoreModal
+          visible={isBackupModalVisible}
+          onClose={() => setIsBackupModalVisible(false)}
+        />
+      )}
     </div>
   );
 };

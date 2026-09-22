@@ -1,6 +1,7 @@
 "use client";
 import { useGetAllProductQuery, useGetMyProductQuery } from "@/Redux/api/productApi";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { IProduct } from "@/Interface/product";
 
 type TQueryParam = {
   name: string;
@@ -17,7 +18,46 @@ const useProductTable = (extraParams: TQueryParam[] = []) => {
     ...extraParams,
   ]);
 
-  const products = response?.data || [];
+  const [localMediaMap, setLocalMediaMap] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    fetch("/api/local-products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data)) {
+          const mediaMap: Record<string, any> = {};
+          data.forEach((p: any) => {
+            const id = p._id || p.id;
+            if (id) {
+              mediaMap[id] = p;
+            }
+          });
+          setLocalMediaMap(mediaMap);
+        }
+      })
+      .catch((err) => console.error("Failed to load local products", err));
+  }, []);
+
+  const rawProducts: IProduct[] = response?.data || [];
+
+  const products = useMemo(() => {
+    return rawProducts.map((product: any) => {
+      const localMedia = localMediaMap[product._id];
+      if (localMedia) {
+        return {
+          ...product,
+          photos: {
+            ...product.photos,
+            mainPhoto: localMedia.photos?.mainPhoto || product.photos?.mainPhoto,
+            others: localMedia.photos?.others && localMedia.photos.others.length > 0
+              ? localMedia.photos.others
+              : product.photos?.others,
+          },
+        };
+      }
+      return product;
+    });
+  }, [rawProducts, localMediaMap]);
 
   const handleTableChange = (pagination: any) => {
     setCurrentPage(pagination.current);
