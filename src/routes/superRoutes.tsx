@@ -58,6 +58,7 @@ const superRoutes: IDNavMenuItem[] = [
     label: "Sales & Inventory",
     children: [
       { label: "Orders", route: "/admin/order" },
+      { label: "Payments", route: "/admin/payments" },
       { label: "Refunds", route: "/admin/refund" },
       { label: "Stock", route: "/admin/stock" },
     ],
@@ -95,7 +96,14 @@ const superRoutes: IDNavMenuItem[] = [
   },
   { icon: <MailOutlined />, label: "Mailbox", route: "/admin/mailbox" },
   { icon: <CustomerServiceOutlined />, label: "Support", route: "/admin/support" },
-  { icon: <SettingOutlined />, label: "Settings", route: "/admin/settings" },
+  {
+    icon: <SettingOutlined />,
+    label: "Settings",
+    children: [
+      { label: "General Settings", route: "/admin/settings" },
+      { label: "Payment Gateway", route: "/admin/payment-gateway" },
+    ],
+  },
 ];
 
 export { superRoutes };
