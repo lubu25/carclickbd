@@ -5,7 +5,7 @@ export const auctionSheetApi = baseApi.injectEndpoints({
     getAuctionSheetReport: build.query({
       queryFn: async (chassis: string, _queryApi, _extraOptions, fetchWithBQ) => {
         try {
-          const response = await fetch(`https://jpcenter.ru/api/report?chassis=${encodeURIComponent(chassis)}&code=3574926_42351f64ee17f62f8729d3d527c35dca`);
+          const response = await fetch(`/api/jpcenter?chassis=${encodeURIComponent(chassis)}`);
           if (!response.ok) {
             return { error: { status: response.status, data: await response.text() } };
           }
@@ -17,7 +17,7 @@ export const auctionSheetApi = baseApi.injectEndpoints({
             
             const errorNode = xmlDoc.querySelector("error");
             if (errorNode && errorNode.textContent === "not found") {
-              return { data: { found: false } };
+              return { data: { data: { found: false } } };
             }
             
             const rowNodes = xmlDoc.querySelectorAll("row");
@@ -30,11 +30,13 @@ export const auctionSheetApi = baseApi.injectEndpoints({
             });
             
             return { 
-              data: { 
-                found: rows.length > 0, 
-                report: rows, 
-                download_available: rows.length > 0,
-                chassis 
+              data: {
+                data: {
+                  found: rows.length > 0, 
+                  report: rows, 
+                  download_available: rows.length > 0,
+                  chassis 
+                }
               } 
             };
           } else {
