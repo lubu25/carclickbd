@@ -25,7 +25,7 @@ export const auctionSheetApi = baseApi.injectEndpoints({
             
             const notFoundNode = xmlDoc.querySelector("error");
             if (notFoundNode && notFoundNode.textContent === "not found") {
-              return { data: { data: { found: false } } };
+              return { data: { data: { found: false, report: [], download_available: false, chassis } } };
             }
             
             const rowNodes = xmlDoc.querySelectorAll("row");

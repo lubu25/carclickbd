@@ -6,7 +6,6 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "postinstall": "npm run build",
     "lint": "next lint",
     "type:check": "tsc --pretty --noEmit",
     "format:check": "prettier --check .",

@@ -26,7 +26,7 @@ const VerifyAuctionSheetPage = () => {
 
     try {
       const response = await checkChassis(chassis).unwrap();
-      const lookup = response?.data?.data || response?.data;
+      const lookup = (response as any)?.data?.data || response?.data;
 
       if (!lookup?.found) {
         setSearchError(

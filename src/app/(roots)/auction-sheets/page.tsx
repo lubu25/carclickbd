@@ -221,7 +221,7 @@ const AuctionSheetsPageContent = () => {
   }, [downloadUrl, isPaymentPaid, paymentId]);
 
   const reportEnvelope = data?.data;
-  const reportData = reportEnvelope?.data || reportEnvelope || data;
+  const reportData = (reportEnvelope as any)?.data || reportEnvelope || data;
   const report = reportData?.report;
   const reportSource = Array.isArray(report) ? report[0] : report;
   const reportRows = buildReportRows(report);
@@ -263,54 +263,30 @@ const AuctionSheetsPageContent = () => {
     }
 
     try {
-      const response = await createAuctionSheetOrder({
-        chassis: cleanChassis,
-        name: String(formData.get('name') || ''),
-        email: String(formData.get('email') || ''),
-        mobileNumber: String(formData.get('mobile') || ''),
-        address: String(formData.get('address') || ''),
-        amount: 800,
-        termsAccepted: formData.get('termsAccepted') === 'on',
-      }).unwrap();
+      // Bypass the failing backend /auction-sheet/order endpoint
+      // and directly hit our Next.js API route to initiate EPS Checkout
+      const response = await fetch('/api/eps/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chassis: cleanChassis,
+          name: String(formData.get('name') || ''),
+          email: String(formData.get('email') || ''),
+          mobileNumber: String(formData.get('mobile') || ''),
+          address: String(formData.get('address') || ''),
+          amount: 800,
+          termsAccepted: formData.get('termsAccepted') === 'on',
+        })
+      });
 
-      const order =
-        response?.data?.data?.order ||
-        response?.data?.order ||
-        response?.order ||
-        response?.data;
-      const orderId = order?._id || order?.id;
+      const paymentResponse = await response.json();
 
-      if (!orderId) {
-        throw new Error('Order reference was not returned. Please try again.');
+      if (!paymentResponse.success) {
+        throw new Error(paymentResponse.message || 'Failed to initiate EPS payment.');
       }
 
-      const paymentResponse = await initBdGateAuctionSheetPayment({
-        orderId,
-        chassis: cleanChassis,
-        amount: 800,
-        description: `CarClickBD auction sheet verification${
-          cleanChassis ? ` for ${cleanChassis}` : ''
-        }`,
-      }).unwrap();
+      const paymentUrl = paymentResponse?.data?.payment_url;
 
-      const paymentData =
-        paymentResponse?.data?.data || paymentResponse?.data || paymentResponse;
-      const paymentUrl =
-        paymentData?.payment_url ||
-        paymentData?.paymentUrl ||
-        paymentData?.checkout_url ||
-        paymentData?.checkoutUrl ||
-        paymentData?.payment_link ||
-        paymentData?.paymentLink ||
-        paymentData?.link ||
-        paymentData?.data?.payment_url ||
-        paymentData?.data?.paymentUrl ||
-        paymentData?.data?.checkout_url ||
-        paymentData?.data?.checkoutUrl ||
-        paymentData?.data?.payment_link ||
-        paymentData?.data?.paymentLink ||
-        paymentData?.data?.link ||
-        paymentData?.url;
 
       if (!paymentUrl) {
         throw new Error(
