@@ -1,15 +1,11 @@
-import { getBaseUrl } from "@/helpers/config/envConfig";
-
-const getApiOrigin = () => {
-  // Always return the absolute backend origin to avoid rewrite issues on Hostinger
-  return "https://carclickbd-backend.jdmcarworld.com";
-};
+const BACKEND_ORIGIN = "https://carclickbd-backend.jdmcarworld.com";
 
 export const getMediaUrl = (url?: string | null) => {
   if (!url) {
     return "/placeholder.png";
   }
 
+  // Already an absolute URL — return as is
   if (
     url.startsWith("http://") ||
     url.startsWith("https://") ||
@@ -19,8 +15,19 @@ export const getMediaUrl = (url?: string | null) => {
     return url;
   }
 
+  // Relative paths starting with /uploads/ — prepend the backend origin
   if (url.startsWith("/uploads/")) {
-    return `${getApiOrigin()}${url}`;
+    return `${BACKEND_ORIGIN}${url}`;
+  }
+
+  // Some images might come as "uploads/..." without leading slash
+  if (url.startsWith("uploads/")) {
+    return `${BACKEND_ORIGIN}/${url}`;
+  }
+
+  // Any other relative path that looks like a backend asset
+  if (url.startsWith("/") && !url.startsWith("/_next")) {
+    return `${BACKEND_ORIGIN}${url}`;
   }
 
   return url;
