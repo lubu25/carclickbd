@@ -12,6 +12,7 @@ import {
   ShopOutlined,
   TeamOutlined,
   UserOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import { BiPurchaseTag } from "react-icons/bi";
 
@@ -63,6 +64,11 @@ const superRoutes: IDNavMenuItem[] = [
       { label: "Stock", route: "/admin/stock" },
     ],
   },
+  {
+    icon: <CreditCardOutlined />,
+    label: "Payment Gateway",
+    route: "/admin/payment-gateway",
+  },
   { icon: <AppstoreOutlined />, label: "Vehicle Categories", route: "/admin/category" },
   {
     icon: <NotificationOutlined />,
@@ -96,14 +102,7 @@ const superRoutes: IDNavMenuItem[] = [
   },
   { icon: <MailOutlined />, label: "Mailbox", route: "/admin/mailbox" },
   { icon: <CustomerServiceOutlined />, label: "Support", route: "/admin/support" },
-  {
-    icon: <SettingOutlined />,
-    label: "Settings",
-    children: [
-      { label: "General Settings", route: "/admin/settings" },
-      { label: "Payment Gateway", route: "/admin/payment-gateway" },
-    ],
-  },
+  { icon: <SettingOutlined />, label: "Settings", route: "/admin/settings" },
 ];
 
 export { superRoutes };
