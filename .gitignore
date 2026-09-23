@@ -43,3 +43,6 @@ next-env.d.ts
 # system files
 desktop.ini
 Thumbs.db
+
+# config
+eps-config.json
