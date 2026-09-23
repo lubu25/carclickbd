@@ -42,6 +42,7 @@ export default function PaymentGatewaySettings() {
   const [fetching, setFetching] = useState(true);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
+  const [testAmount, setTestAmount] = useState<number>(10);
 
   const fetchConfig = useCallback(async () => {
     setFetching(true);
@@ -114,7 +115,7 @@ export default function PaymentGatewaySettings() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: 500,
+          amount: testAmount,
           chassis: "TEST-CHASSIS-123",
           name: "Test Admin User",
           email: "admin@example.com",
@@ -358,7 +359,7 @@ export default function PaymentGatewaySettings() {
 
         {/* Testing Section */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mb-12">
-          <div className="border-b border-slate-100 bg-slate-50/50 px-8 py-5 flex items-center justify-between">
+          <div className="border-b border-slate-100 bg-slate-50/50 px-8 py-5 flex items-center justify-between flex-wrap gap-4">
             <div>
               <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
                 <ShieldCheck className="h-5 w-5 text-green-600" />
@@ -368,14 +369,26 @@ export default function PaymentGatewaySettings() {
                 Test your configuration to ensure the payment gateway generates links correctly.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={testing || !config.merchantId}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
-            >
-              {testing ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Run Test"}
-            </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                <span className="text-sm font-medium text-slate-500">Amount (BDT):</span>
+                <input
+                  type="number"
+                  min="10"
+                  value={testAmount}
+                  onChange={(e) => setTestAmount(Number(e.target.value))}
+                  className="w-24 outline-none text-sm font-semibold text-slate-900 bg-transparent"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={testing || !config.merchantId}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
+              >
+                {testing ? <RefreshCw className="h-4 w-4 animate-spin" /> : "Run Test"}
+              </button>
+            </div>
           </div>
           
           {testResult && (
