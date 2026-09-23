@@ -36,5 +36,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# large deployment zip files
+# large deployment files
 *.zip
+*.tar.gz
+
+# system files
+desktop.ini
+Thumbs.db
