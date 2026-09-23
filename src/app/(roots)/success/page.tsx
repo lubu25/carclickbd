@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 
 export default function Success() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const order = searchParams.get("ref");
   const session_id = searchParams.get("session_id");
   const amountParam = searchParams.get("amount");

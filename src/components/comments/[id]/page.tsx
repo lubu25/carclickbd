@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import LiveAuctionProduct from "./components/LiveAuctionProduct";
 
 const CommentsPage = () => {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
   // Ensure productId is a string
   const productId = Array.isArray(id) ? id[0] : id;

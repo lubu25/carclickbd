@@ -16,7 +16,8 @@ import { useAppSelector } from "@/Redux/hooks";
 import PriceNavbar from "@/components/product/PriceNavbar";
 
 export default function Page() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const isLoggedIn = useAppSelector((state) => state.authReducer.isLoggedIn);
 
   const { data, isLoading: isProductDetailsLoading } = useGetProductByIdQuery(

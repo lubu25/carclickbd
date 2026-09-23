@@ -17,7 +17,7 @@ export default function RootLayout({
     "/live-auction",
     "/auction-comments",
   ];
-  const shouldShowFooter = !hideFooterPaths.includes(pathname);
+  const shouldShowFooter = !hideFooterPaths.includes(pathname ?? "");
 
   return (
     <main className="min-w-0 overflow-x-hidden">

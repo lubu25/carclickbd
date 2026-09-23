@@ -1,10 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Keep legacy lint issues from blocking production deployment. TypeScript
-  // validation still runs during the build and is checked in CI locally.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   async rewrites() {
     return [
       {

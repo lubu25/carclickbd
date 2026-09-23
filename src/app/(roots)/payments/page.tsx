@@ -9,7 +9,7 @@ import { useSyncBdGatePaymentStatusMutation } from '@/Redux/api/paymentApi';
 
 function PaymentPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const status = searchParams.get('status');
   const type = searchParams.get('type');
   const token = searchParams.get('token') || searchParams.get('session_token');

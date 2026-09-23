@@ -27,6 +27,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/components/dashboardComponents/job/rejectlJob/JobCardR.tsx"
-, "src/components/common/product/create-product", "src/Redux/api/notificationApi.tsx"  ],
-  "exclude": ["node_modules"]
+, "src/components/common/product/create-product", "src/Redux/api/notificationApi.tsx"
+  ],
+  "exclude": ["node_modules", "temp-eps-pg"]
 }

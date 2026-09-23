@@ -10,7 +10,8 @@ import { FaRegCopy } from "react-icons/fa";
 const { Title, Text } = Typography;
 
 const Checkout = () => {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const { data, isLoading } = useOrderQuery(id);
   const order = data?.data;
 

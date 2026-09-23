@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useMemo } from "react";
 
 const BodyStyleFilter = () => {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const selectedMaker = searchParams.get("make") || "";
 
   const modelOptions = useMemo(() => {

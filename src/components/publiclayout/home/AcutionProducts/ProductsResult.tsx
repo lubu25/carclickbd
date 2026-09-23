@@ -30,7 +30,7 @@ const ProductsResult = ({
   isDraft,
   isFeatured
 }:AuctionProductsProps) => {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
 
   const filters = useMemo(() => {
     const baseFilters: { name: string; value?: any }[] = [];

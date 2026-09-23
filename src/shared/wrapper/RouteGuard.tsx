@@ -14,7 +14,7 @@ const isAdminRole = (role?: string) =>
 
 const RouteGuard = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const isLoggedIn = useAppSelector((state) => state.authReducer.isLoggedIn);
   const profileRole = useAppSelector((state) => state.authReducer.profile?.role);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);

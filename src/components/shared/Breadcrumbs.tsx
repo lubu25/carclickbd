@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 export default function Breadcrumbs() {
   const pathname = usePathname();
-  const pathSegments = pathname.split("/").filter((segment) => segment);
+  const pathSegments = (pathname ?? "").split("/").filter((segment) => segment);
 
   const breadcrumbItems = [
     {

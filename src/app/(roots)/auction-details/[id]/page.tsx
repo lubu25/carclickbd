@@ -13,7 +13,8 @@ import FacebookShareButton from "@/components/product/FacebookShareButton";
 import { getProductStatusMeta } from "@/utils/productStatus";
 
 export default function ProductDetailsPage() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
   const { data, isLoading } = useGetProductByIdQuery(`${id}`, {
     skip: !id,

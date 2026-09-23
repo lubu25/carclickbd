@@ -157,7 +157,7 @@ const infoSections = [
 ];
 
 const AuctionSheetsPageContent = () => {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const chassis = searchParams.get('chassis') || '';
   const paymentId = searchParams.get('payment_id') || '';
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);

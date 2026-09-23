@@ -9,7 +9,7 @@ import { Button, Col, Row } from "antd";
 import { IProduct } from "@/Interface/product";
 
 const SearchPage = () => {
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams() ?? new URLSearchParams();
     const title = searchParams.get("title");
 
     const filters = useMemo(() => {

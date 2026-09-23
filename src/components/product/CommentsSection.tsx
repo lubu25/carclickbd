@@ -6,7 +6,8 @@ import { useParams } from "next/navigation";
 import ProductCommentsSkeleton from "./skeleton/ProductCommentSkeleton";
 
 const CommentsSection = ({ comments }: { comments: any[] }) => {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
   return (
     <>

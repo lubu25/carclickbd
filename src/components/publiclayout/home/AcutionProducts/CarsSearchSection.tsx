@@ -7,7 +7,7 @@ import { Search } from "lucide-react";
 
 const CarsSearchSection = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const [keyword, setKeyword] = useState(searchParams.get("searchTerm") || "");
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {

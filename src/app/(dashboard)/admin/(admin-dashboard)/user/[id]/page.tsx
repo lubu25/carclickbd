@@ -53,7 +53,8 @@ const UserDetailsPage: React.FC = () => {
     userRate: "0.95%",
   };
 
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
 
   // Example user data, replace with API call or state as necessary
   const user = {

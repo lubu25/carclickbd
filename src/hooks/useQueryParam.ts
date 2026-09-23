@@ -7,5 +7,5 @@ import { useSearchParams } from "next/navigation";
  */
 export const useQueryParam = (paramName: string): string | null => {
   const searchParams = useSearchParams();
-  return searchParams.get(paramName);
+  return searchParams?.get(paramName) ?? null;
 };

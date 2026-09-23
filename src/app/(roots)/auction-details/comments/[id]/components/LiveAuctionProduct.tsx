@@ -13,7 +13,8 @@ import { getMediaUrl } from "@/utils/media";
 
 const { Title, Text } = Typography;
 const LiveAuctionProduct = () => {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const { data, isLoading } = useGetProductByIdQuery(id, { skip: !id });
   const product = data?.data || [];
   const router = useRouter();

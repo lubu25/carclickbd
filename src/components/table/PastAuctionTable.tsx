@@ -54,7 +54,7 @@ const PastAuctionTable: React.FC<ProductTableProps> = ({
   onChange,
 }) => {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [searchText, setSearchText] = useState("");
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProductStatus] = useUpdateProductStatusMutation();

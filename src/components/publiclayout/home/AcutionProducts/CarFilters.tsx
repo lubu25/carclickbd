@@ -51,7 +51,7 @@ const uniqueOptions = (options: { value: string; label: string }[]) => {
 
 export default function CarFilters(_props: { isWinner?: boolean }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const activeSort = searchParams.get("sort") || "";
   const [maker, setMaker] = useState(searchParams.get("make") || "all");
   const [model, setModel] = useState(searchParams.get("model") || "all");

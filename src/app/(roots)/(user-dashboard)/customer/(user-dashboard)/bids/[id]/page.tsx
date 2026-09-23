@@ -19,7 +19,8 @@ const ProductBids: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const [searchText, setSearchText] = useState("");
 
   const { data, isLoading: isProductDetailsLoading } =
