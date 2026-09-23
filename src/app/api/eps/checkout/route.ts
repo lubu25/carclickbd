@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import axios from 'axios';
 
 interface EpsConfig {
   merchantId: string;
@@ -22,7 +23,7 @@ function loadEpsConfig(): EpsConfig {
     userName: process.env.EPS_USERNAME || '',
     password: process.env.EPS_PASSWORD || '',
     hashKey: process.env.EPS_HASH_KEY || '',
-    gatewayUrl: process.env.EPS_GATEWAY_URL || 'https://sandbox.eps.com.bd/payment',
+    gatewayUrl: 'https://sandbox.eps.com.bd/payment', // Fallback, not really used for S2S
     isSandbox: true,
     isActive: true,
   };
@@ -40,11 +41,10 @@ function loadEpsConfig(): EpsConfig {
   return defaults;
 }
 
-function generateEpsHash(params: Record<string, string>, hashKey: string): string {
-  // EPS hash: sort params alphabetically, concatenate values, then HMAC-SHA256
-  const sortedKeys = Object.keys(params).sort();
-  const message = sortedKeys.map((k) => params[k]).join('');
-  return crypto.createHmac('sha256', hashKey).update(message).digest('hex');
+function generateHash(value: string, hashKey: string): string {
+  const hmac = crypto.createHmac('sha512', Buffer.from(hashKey, 'utf8'));
+  hmac.update(value, 'utf8');
+  return hmac.digest('base64');
 }
 
 export async function POST(request: Request) {
@@ -68,50 +68,102 @@ export async function POST(request: Request) {
       );
     }
 
-    const orderId = `CCB_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-
-    // Determine callback URLs
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carclickbd.com';
-    const successUrl = `${baseUrl}/payments?status=success&order=${orderId}`;
-    const failUrl = `${baseUrl}/payments?status=fail&order=${orderId}`;
-    const cancelUrl = `${baseUrl}/payments?status=cancel&order=${orderId}`;
-
-    // EPS payment parameters
-    const params: Record<string, string> = {
-      merchant_id: config.merchantId,
-      store_id: config.storeId,
-      username: config.userName,
-      password: config.password,
-      order_id: orderId,
-      amount: String(amount),
-      currency: 'BDT',
-      customer_name: name || '',
-      customer_email: email || '',
-      customer_mobile: mobileNumber || '',
-      customer_address: address || '',
-      product_name: `Auction Sheet Verification - ${chassis}`,
-      product_info: chassis || '',
-      success_url: successUrl,
-      fail_url: failUrl,
-      cancel_url: cancelUrl,
+    const isSandbox = config.isSandbox;
+    const endpoints = {
+      GET_TOKEN: isSandbox
+        ? 'https://sandbox-pgapi.eps.com.bd/v1/Auth/GetToken'
+        : 'https://pgapi.eps.com.bd/v1/Auth/GetToken',
+      INITIALIZE: isSandbox
+        ? 'https://sandbox-pgapi.eps.com.bd/v1/EPSEngine/InitializeEPS'
+        : 'https://pgapi.eps.com.bd/v1/EPSEngine/InitializeEPS',
     };
 
-    // Generate hash/signature
-    const hash = generateEpsHash(params, config.hashKey);
-    params.hash = hash;
+    // 1. Get Token
+    let token = '';
+    try {
+      const authHash = generateHash(config.userName, config.hashKey);
+      const tokenRes = await axios.post(
+        endpoints.GET_TOKEN,
+        {
+          userName: config.userName,
+          password: config.password,
+        },
+        {
+          headers: { 'x-hash': authHash },
+        }
+      );
 
-    // Build the payment URL with query params
-    const queryString = new URLSearchParams(params).toString();
-    const paymentUrl = `${config.gatewayUrl}?${queryString}`;
+      if (tokenRes.data && tokenRes.data.token) {
+        token = tokenRes.data.token;
+      } else {
+        throw new Error(tokenRes.data.errorMessage || 'Failed to authenticate with EPS');
+      }
+    } catch (authErr: any) {
+      console.error('EPS Auth Error:', authErr.response?.data || authErr.message);
+      return NextResponse.json({ success: false, message: 'EPS Authentication Failed. Check credentials.' }, { status: 401 });
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        payment_url: paymentUrl,
-        orderId,
-        params, // include params so frontend can POST to gateway if needed
-      },
-    });
+    // 2. Initialize Payment
+    const orderId = `CCB_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carclickbd.com';
+
+    const initHash = generateHash(orderId, config.hashKey);
+    const paymentParams = {
+      merchantId: config.merchantId,
+      storeId: config.storeId,
+      CustomerOrderId: orderId,
+      merchantTransactionId: orderId,
+      transactionTypeId: 1, // WEB
+      financialEntityId: 0,
+      transitionStatusId: 0,
+      totalAmount: Number(amount),
+      ipAddress: '0.0.0.0',
+      version: '1',
+      successUrl: `${baseUrl}/payments?status=success&order=${orderId}`,
+      failUrl: `${baseUrl}/payments?status=fail&order=${orderId}`,
+      cancelUrl: `${baseUrl}/payments?status=cancel&order=${orderId}`,
+      customerName: name || 'Guest User',
+      customerEmail: email || 'no-email@example.com',
+      CustomerAddress: address || 'Dhaka',
+      CustomerCity: 'Dhaka',
+      CustomerState: 'Dhaka',
+      CustomerPostcode: '1000',
+      CustomerCountry: 'BD',
+      CustomerPhone: mobileNumber || '01700000000',
+      ProductName: chassis ? `Auction Sheet Verification - ${chassis}` : 'CarClickBD Service',
+      ProductCategory: 'Service',
+      ProductProfile: 'general',
+      ShippingMethod: 'NO',
+      NoOfItem: '1',
+    };
+
+    try {
+      const initRes = await axios.post(endpoints.INITIALIZE, paymentParams, {
+        headers: {
+          'x-hash': initHash,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const initData = initRes.data;
+
+      if (initData.RedirectURL) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            payment_url: initData.RedirectURL,
+            orderId,
+            eps_data: initData
+          },
+        });
+      } else {
+        throw new Error(initData.ErrorMessage || 'Failed to initialize payment');
+      }
+    } catch (initErr: any) {
+      console.error('EPS Init Error:', initErr.response?.data || initErr.message);
+      return NextResponse.json({ success: false, message: initErr.response?.data?.ErrorMessage || initErr.message || 'Payment initialization failed' }, { status: 500 });
+    }
+
   } catch (error: any) {
     console.error('EPS checkout error:', error);
     return NextResponse.json(
