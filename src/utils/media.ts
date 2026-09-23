@@ -5,6 +5,12 @@ export const getMediaUrl = (url?: string | null) => {
     return "/placeholder.png";
   }
 
+  // Keep backend assets on the deployed site's origin so they use the same
+  // Next.js proxy as API requests.
+  if (url.startsWith(`${BACKEND_ORIGIN}/`)) {
+    return url.slice(BACKEND_ORIGIN.length);
+  }
+
   // Already an absolute URL — return as is
   if (
     url.startsWith("http://") ||
@@ -15,19 +21,19 @@ export const getMediaUrl = (url?: string | null) => {
     return url;
   }
 
-  // Relative paths starting with /uploads/ — prepend the backend origin
+  // Relative paths starting with /uploads/ are served through the Next.js proxy.
   if (url.startsWith("/uploads/")) {
-    return `${BACKEND_ORIGIN}${url}`;
+    return url;
   }
 
   // Some images might come as "uploads/..." without leading slash
   if (url.startsWith("uploads/")) {
-    return `${BACKEND_ORIGIN}/${url}`;
+    return `/${url}`;
   }
 
-  // Any other relative path that looks like a backend asset
+  // Any other relative path that looks like a backend asset.
   if (url.startsWith("/") && !url.startsWith("/_next")) {
-    return `${BACKEND_ORIGIN}${url}`;
+    return url;
   }
 
   return url;
