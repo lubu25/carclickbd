@@ -33,9 +33,20 @@ const ChangePassword: React.FC = () => {
     try {
       setErrorMessage(null);
       setSuccessMessage(null);
-      await changePassword(otherPasswords).unwrap();
-      message.success("Password changed successfully!");
-      setSuccessMessage("Password changed successfully!");
+      const response = await changePassword(otherPasswords).unwrap();
+      const updateConfirmed =
+        response?.success === true || response?.statusCode === 200;
+
+      if (!updateConfirmed || response?.success === false) {
+        throw new Error(
+          response?.message ||
+            "The server did not confirm the password update. Please try again.",
+        );
+      }
+
+      const successText = response?.message || "Password changed successfully!";
+      message.success(successText);
+      setSuccessMessage(successText);
       form.resetFields();
     } catch (error: any) {
       const errorMsg =

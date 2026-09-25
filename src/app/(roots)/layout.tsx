@@ -23,7 +23,9 @@ export default function RootLayout({
     <main className="min-w-0 overflow-x-hidden">
       <Navbar />
       <div className="min-w-0">{children}</div>
-      {shouldShowFooter && <AppFooter />}
+      {shouldShowFooter && (
+        <AppFooter showPaymentBanner={pathname === "/verify-auction-sheet"} />
+      )}
     </main>
   );
 }

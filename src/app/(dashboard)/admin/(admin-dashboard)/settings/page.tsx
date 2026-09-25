@@ -58,13 +58,7 @@ export default function AdminSettingsPage() {
         </TabPane>
         {/* Profile Settings */}
         <TabPane tab="Change Password" key="password">
-          <Form layout="vertical" onFinish={handleSave}>
           <ChangePassword />
-
-            {/* <Button type="primary" htmlType="submit" loading={loading}>
-              Save Profile Settings
-            </Button> */}
-          </Form>
         </TabPane>
       </Tabs>
     </div>
