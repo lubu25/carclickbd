@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Globe,
   Settings,
+  Info,
+  CheckCircle,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -43,6 +45,9 @@ export default function PaymentGatewaySettings() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
   const [testAmount, setTestAmount] = useState<number>(10);
+  // Tracks whether active credentials come from environment variables (permanent)
+  // or from the local admin-panel save (session-only, lost on redeploy)
+  const [envVarsActive, setEnvVarsActive] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     setFetching(true);
@@ -50,10 +55,13 @@ export default function PaymentGatewaySettings() {
       const res = await fetch("/api/eps/config");
       const data = await res.json();
       if (data.success && data.data) {
+        const cfg = data.data;
         setConfig({
-          ...data.data,
-          gatewayUrl: data.data.gatewayUrl || "https://sandbox.eps.com.bd/payment",
+          ...cfg,
+          gatewayUrl: cfg.gatewayUrl || "https://sandbox.eps.com.bd/payment",
         });
+        // If merchantId is already filled, env vars are working
+        setEnvVarsActive(!!cfg.merchantId);
       }
     } catch (error) {
       console.error("Failed to load EPS config:", error);
@@ -163,6 +171,35 @@ export default function PaymentGatewaySettings() {
           <p className="mt-2 text-base text-slate-500">
             Configure your EPS (Easy Payment System) credentials to enable secure live payments on your platform.
           </p>
+        </div>
+
+        {/* Permanent Status Banner */}
+        <div className={`flex items-start gap-4 rounded-2xl border p-5 ${
+          envVarsActive
+            ? "border-green-200 bg-green-50"
+            : "border-amber-200 bg-amber-50"
+        }`}>
+          {envVarsActive ? (
+            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+          ) : (
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          )}
+          <div className="space-y-1">
+            <p className={`text-sm font-semibold ${
+              envVarsActive ? "text-green-800" : "text-amber-800"
+            }`}>
+              {envVarsActive
+                ? "✅ Credentials loaded from Hostinger Environment Variables (Permanent)"
+                : "⚠️ Credentials not found in Environment Variables"}
+            </p>
+            <p className={`text-xs leading-relaxed ${
+              envVarsActive ? "text-green-700" : "text-amber-700"
+            }`}>
+              {envVarsActive
+                ? "Payment gateway will stay connected even after every website update or deployment. The values shown below are read from your Hostinger hPanel environment variables."
+                : "Go to Hostinger hPanel → Websites → Node.js → Environment Variables and add EPS_MERCHANT_ID, EPS_STORE_ID, EPS_USERNAME, EPS_PASSWORD, EPS_HASH_KEY, EPS_IS_SANDBOX=false, EPS_IS_ACTIVE=true. Do this once and the gateway will never disconnect on deployment again."}
+            </p>
+          </div>
         </div>
 
         {/* Status Cards */}

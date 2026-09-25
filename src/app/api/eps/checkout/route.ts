@@ -8,37 +8,58 @@ interface EpsConfig {
   userName: string;
   password: string;
   hashKey: string;
-  gatewayUrl: string;
   isSandbox: boolean;
   isActive: boolean;
 }
 
+/**
+ * Loads EPS config.
+ * Priority order:
+ *  1. Environment variables (set once in Hostinger hPanel → persists across ALL deployments)
+ *  2. eps-config.json (admin panel override — only exists until next deploy)
+ *
+ * This ensures payment gateway NEVER disconnects on deployment
+ * as long as env vars are set in Hostinger hPanel.
+ */
 function loadEpsConfig(): EpsConfig {
-  const fs = require('fs');
-  const path = require('path');
-
-  const defaults: EpsConfig = {
+  // ── Step 1: Build config from environment variables ──────────────────────
+  const envConfig: EpsConfig = {
     merchantId: process.env.EPS_MERCHANT_ID || '',
     storeId: process.env.EPS_STORE_ID || '',
     userName: process.env.EPS_USERNAME || '',
     password: process.env.EPS_PASSWORD || '',
     hashKey: process.env.EPS_HASH_KEY || '',
-    gatewayUrl: 'https://sandbox.eps.com.bd/payment', // Fallback, not really used for S2S
-    isSandbox: true,
-    isActive: true,
+    isSandbox: process.env.EPS_IS_SANDBOX !== 'false', // default: true (sandbox)
+    isActive: process.env.EPS_IS_ACTIVE !== 'false',   // default: true (active)
   };
 
+  // ── Step 2: Merge with eps-config.json if it exists (admin panel override) ──
+  // NOTE: This file is NOT in git. It only exists if an admin saved settings
+  // via the admin panel after the last deployment. If missing, env vars are used.
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path');
     const configPath = path.join(process.cwd(), 'eps-config.json');
     if (fs.existsSync(configPath)) {
-      const configData: Partial<EpsConfig> = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return { ...defaults, ...configData };
+      const fileData: Partial<EpsConfig> = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      // Only override env value if the file has a non-empty value for that field
+      return {
+        merchantId: fileData.merchantId || envConfig.merchantId,
+        storeId: fileData.storeId || envConfig.storeId,
+        userName: fileData.userName || envConfig.userName,
+        password: fileData.password || envConfig.password,
+        hashKey: fileData.hashKey || envConfig.hashKey,
+        isSandbox: fileData.isSandbox !== undefined ? fileData.isSandbox : envConfig.isSandbox,
+        isActive: fileData.isActive !== undefined ? fileData.isActive : envConfig.isActive,
+      };
     }
   } catch (e) {
-    console.error('Failed to load EPS config:', e);
+    console.warn('[EPS] Could not read eps-config.json, using env vars:', e);
   }
 
-  return defaults;
+  return envConfig;
 }
 
 function generateHash(value: string, hashKey: string): string {
@@ -63,7 +84,7 @@ export async function POST(request: Request) {
 
     if (!config.merchantId || !config.storeId || !config.userName || !config.password || !config.hashKey) {
       return NextResponse.json(
-        { success: false, message: 'Payment gateway is not fully configured. Please set all credentials in the admin panel.' },
+        { success: false, message: 'Payment gateway is not configured. Please set EPS credentials in Hostinger hPanel environment variables.' },
         { status: 400 }
       );
     }
@@ -153,7 +174,7 @@ export async function POST(request: Request) {
           data: {
             payment_url: initData.RedirectURL,
             orderId,
-            eps_data: initData
+            eps_data: initData,
           },
         });
       } else {
@@ -161,14 +182,13 @@ export async function POST(request: Request) {
       }
     } catch (initErr: any) {
       console.error('EPS Init Error:', initErr.response?.data || initErr.message);
-      return NextResponse.json({ success: false, message: initErr.response?.data?.ErrorMessage || initErr.message || 'Payment initialization failed' }, { status: 500 });
+      return NextResponse.json(
+        { success: false, message: initErr.response?.data?.ErrorMessage || initErr.message || 'Payment initialization failed' },
+        { status: 500 }
+      );
     }
-
   } catch (error: any) {
     console.error('EPS checkout error:', error);
-    return NextResponse.json(
-      { success: false, message: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
