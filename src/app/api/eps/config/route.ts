@@ -4,27 +4,40 @@ import path from 'path';
 
 const configFilePath = path.join(process.cwd(), 'eps-config.json');
 
-const defaultConfig = {
-  merchantId: '',
-  storeId: '',
-  userName: '',
-  password: '',
-  hashKey: '',
-  gatewayUrl: 'https://sandbox.eps.com.bd/payment',
-  isSandbox: true,
-  isActive: true,
-};
+// Environment variable defaults — these persist across all deployments
+function getEnvDefaults() {
+  return {
+    merchantId: process.env.EPS_MERCHANT_ID || '',
+    storeId: process.env.EPS_STORE_ID || '',
+    userName: process.env.EPS_USERNAME || '',
+    password: process.env.EPS_PASSWORD || '',
+    hashKey: process.env.EPS_HASH_KEY || '',
+    gatewayUrl:
+      process.env.EPS_IS_SANDBOX === 'false'
+        ? 'https://eps.com.bd/payment'
+        : 'https://sandbox.eps.com.bd/payment',
+    isSandbox: process.env.EPS_IS_SANDBOX !== 'false',
+    isActive: process.env.EPS_IS_ACTIVE !== 'false',
+  };
+}
 
 export async function GET() {
   try {
+    // Start with environment variable defaults (always available after deploy)
+    const defaults = getEnvDefaults();
+
+    // If a local override file exists, merge it on top
     if (fs.existsSync(configFilePath)) {
-      const data = fs.readFileSync(configFilePath, 'utf8');
-      const parsed = JSON.parse(data);
-      // Merge with defaults to ensure all fields exist
-      return NextResponse.json({ success: true, data: { ...defaultConfig, ...parsed } });
-    } else {
-      return NextResponse.json({ success: true, data: defaultConfig });
+      try {
+        const data = fs.readFileSync(configFilePath, 'utf8');
+        const parsed = JSON.parse(data);
+        return NextResponse.json({ success: true, data: { ...defaults, ...parsed } });
+      } catch {
+        // If file is corrupted, fall back to env defaults
+      }
     }
+
+    return NextResponse.json({ success: true, data: defaults });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
@@ -46,6 +59,7 @@ export async function POST(request: Request) {
       isActive: isActive !== undefined ? isActive : true,
     };
 
+    // Save as a local override file for runtime changes
     fs.writeFileSync(configFilePath, JSON.stringify(configData, null, 2), 'utf8');
 
     return NextResponse.json({ success: true, message: 'EPS Settings saved successfully', data: configData });
