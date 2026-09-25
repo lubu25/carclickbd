@@ -1,4 +1,7 @@
-const BACKEND_ORIGIN = "https://carclickbd-backend.jdmcarworld.com";
+const BACKEND_ORIGIN = new URL(
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://carclickbd-backend.jdmcarworld.com/api/v1",
+).origin;
 export const FALLBACK_MEDIA_URL = "/assets/shared/car.png";
 
 export const getMediaUrl = (url?: string | null) => {

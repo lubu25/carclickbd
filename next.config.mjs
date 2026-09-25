@@ -1,14 +1,21 @@
 /** @type {import('next').NextConfig} */
+const defaultApiBaseUrl =
+  'https://carclickbd-backend.jdmcarworld.com/api/v1';
+const apiBaseUrl = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || defaultApiBaseUrl
+).replace(/\/+$/, '');
+const backendOrigin = new URL(apiBaseUrl).origin;
+
 const nextConfig = {
   async rewrites() {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'https://carclickbd-backend.jdmcarworld.com/api/v1/:path*',
+        destination: `${apiBaseUrl}/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: 'https://carclickbd-backend.jdmcarworld.com/uploads/:path*',
+        destination: `${backendOrigin}/uploads/:path*`,
       },
       {
         source: '/api/jpcenter/:path*',
