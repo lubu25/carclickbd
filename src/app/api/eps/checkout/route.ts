@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 interface EpsConfig {
   merchantId: string;
@@ -37,10 +39,6 @@ function loadEpsConfig(): EpsConfig {
   // NOTE: This file is NOT in git. It only exists if an admin saved settings
   // via the admin panel after the last deployment. If missing, env vars are used.
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require('path');
     const configPath = path.join(process.cwd(), 'eps-config.json');
     if (fs.existsSync(configPath)) {
       const fileData: Partial<EpsConfig> = JSON.parse(fs.readFileSync(configPath, 'utf8'));
