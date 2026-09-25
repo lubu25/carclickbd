@@ -26,6 +26,7 @@ interface EpsConfig {
   gatewayUrl: string;
   isSandbox: boolean;
   isActive: boolean;
+  isSandboxEnvConfigured?: boolean;
 }
 
 export default function PaymentGatewaySettings() {
@@ -48,6 +49,7 @@ export default function PaymentGatewaySettings() {
   // Tracks whether active credentials come from environment variables (permanent)
   // or from the local admin-panel save (session-only, lost on redeploy)
   const [envVarsActive, setEnvVarsActive] = useState(false);
+  const [sandboxModeIsPersistent, setSandboxModeIsPersistent] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     setFetching(true);
@@ -62,6 +64,7 @@ export default function PaymentGatewaySettings() {
         });
         // If merchantId is already filled, env vars are working
         setEnvVarsActive(!!cfg.merchantId);
+        setSandboxModeIsPersistent(cfg.isSandboxEnvConfigured === true);
       }
     } catch (error) {
       console.error("Failed to load EPS config:", error);
@@ -104,7 +107,11 @@ export default function PaymentGatewaySettings() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Payment Gateway settings saved successfully!");
+        toast.success(
+          sandboxModeIsPersistent
+            ? "Payment Gateway settings saved. The hosting environment controls the payment mode."
+            : `Settings saved for this deployment. Add EPS_IS_SANDBOX=${config.isSandbox ? "true" : "false"} in Hostinger to keep ${config.isSandbox ? "Sandbox" : "Live Mode"} after redeploys.`,
+        );
       } else {
         toast.error("Failed to save settings: " + data.message);
       }
@@ -201,6 +208,32 @@ export default function PaymentGatewaySettings() {
             </p>
           </div>
         </div>
+
+        {!sandboxModeIsPersistent && (
+          <div
+            role="alert"
+            className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+          >
+            <p className="font-semibold">Payment mode is not permanent yet</p>
+            <p className="mt-1 leading-6">
+              The current mode is saved only for this deployment and can revert
+              after a GitHub redeploy. To keep the selected{" "}
+              {config.isSandbox ? "Sandbox" : "Live"} mode, add{" "}
+              <code className="rounded bg-amber-100 px-1.5 py-0.5 font-bold">
+                EPS_IS_SANDBOX={config.isSandbox ? "true" : "false"}
+              </code>{" "}
+              to the <strong>carclickbd.com frontend</strong> environment
+              variables in Hostinger, then redeploy. The environment variable
+              will take priority over this temporary setting.
+            </p>
+            {!config.isSandbox && (
+              <p className="mt-2 leading-6">
+                Before switching real payments on, confirm these are your live
+                EPS Merchant ID, Store ID, username, password, and hash key.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Status Cards */}
         <div className="grid gap-4 md:grid-cols-2">

@@ -3,6 +3,15 @@ import fs from 'fs';
 import path from 'path';
 
 const configFilePath = path.join(process.cwd(), 'eps-config.json');
+const sandboxPaymentUrl = 'https://sandbox.eps.com.bd/payment';
+const livePaymentUrl = 'https://eps.com.bd/payment';
+
+const getBooleanEnv = (name: string): boolean | undefined => {
+  const value = process.env[name]?.trim().toLowerCase();
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+};
 
 /**
  * Returns the current EPS config.
@@ -15,18 +24,19 @@ const configFilePath = path.join(process.cwd(), 'eps-config.json');
  * so a partial admin save never breaks the gateway.
  */
 function buildConfig() {
+  const sandboxEnv = getBooleanEnv('EPS_IS_SANDBOX');
+  const activeEnv = getBooleanEnv('EPS_IS_ACTIVE');
   const envConfig = {
     merchantId: process.env.EPS_MERCHANT_ID || '',
     storeId: process.env.EPS_STORE_ID || '',
     userName: process.env.EPS_USERNAME || '',
     password: process.env.EPS_PASSWORD || '',
     hashKey: process.env.EPS_HASH_KEY || '',
-    isSandbox: process.env.EPS_IS_SANDBOX !== 'false',
-    isActive: process.env.EPS_IS_ACTIVE !== 'false',
-    gatewayUrl:
-      process.env.EPS_IS_SANDBOX !== 'false'
-        ? 'https://sandbox.eps.com.bd/payment'
-        : 'https://eps.com.bd/payment',
+    isSandbox: sandboxEnv ?? true,
+    isSandboxEnvConfigured: sandboxEnv !== undefined,
+    isActive: activeEnv ?? true,
+    isActiveEnvConfigured: activeEnv !== undefined,
+    gatewayUrl: (sandboxEnv ?? true) ? sandboxPaymentUrl : livePaymentUrl,
   };
 
   if (fs.existsSync(configFilePath)) {
@@ -38,9 +48,21 @@ function buildConfig() {
         userName: file.userName || envConfig.userName,
         password: file.password || envConfig.password,
         hashKey: file.hashKey || envConfig.hashKey,
-        isSandbox: file.isSandbox !== undefined ? file.isSandbox : envConfig.isSandbox,
-        isActive: file.isActive !== undefined ? file.isActive : envConfig.isActive,
-        gatewayUrl: file.gatewayUrl || envConfig.gatewayUrl,
+        isSandbox: envConfig.isSandboxEnvConfigured
+          ? envConfig.isSandbox
+          : file.isSandbox ?? envConfig.isSandbox,
+        isSandboxEnvConfigured: envConfig.isSandboxEnvConfigured,
+        isActive: envConfig.isActiveEnvConfigured
+          ? envConfig.isActive
+          : file.isActive ?? envConfig.isActive,
+        isActiveEnvConfigured: envConfig.isActiveEnvConfigured,
+        gatewayUrl: envConfig.isSandboxEnvConfigured
+          ? envConfig.gatewayUrl
+          : file.gatewayUrl || (
+              (file.isSandbox ?? envConfig.isSandbox)
+                ? sandboxPaymentUrl
+                : livePaymentUrl
+            ),
       };
     } catch {
       // Corrupted file → fall back to env vars
@@ -73,9 +95,19 @@ export async function POST(request: Request) {
       userName: userName || envDefaults.userName,
       password: password || envDefaults.password,
       hashKey: hashKey || envDefaults.hashKey,
-      gatewayUrl: gatewayUrl || envDefaults.gatewayUrl,
-      isSandbox: isSandbox !== undefined ? isSandbox : envDefaults.isSandbox,
-      isActive: isActive !== undefined ? isActive : envDefaults.isActive,
+      gatewayUrl: envDefaults.isSandboxEnvConfigured
+        ? envDefaults.gatewayUrl
+        : gatewayUrl || envDefaults.gatewayUrl,
+      isSandbox: envDefaults.isSandboxEnvConfigured
+        ? envDefaults.isSandbox
+        : isSandbox !== undefined
+          ? isSandbox
+          : envDefaults.isSandbox,
+      isActive: envDefaults.isActiveEnvConfigured
+        ? envDefaults.isActive
+        : isActive !== undefined
+          ? isActive
+          : envDefaults.isActive,
     };
 
     // Persist as a local override for the current deployment session.

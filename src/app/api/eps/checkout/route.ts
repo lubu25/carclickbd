@@ -14,6 +14,13 @@ interface EpsConfig {
   isActive: boolean;
 }
 
+const getBooleanEnv = (name: string): boolean | undefined => {
+  const value = process.env[name]?.trim().toLowerCase();
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+};
+
 /**
  * Loads EPS config.
  * Priority order:
@@ -25,14 +32,16 @@ interface EpsConfig {
  */
 function loadEpsConfig(): EpsConfig {
   // ── Step 1: Build config from environment variables ──────────────────────
+  const sandboxEnv = getBooleanEnv('EPS_IS_SANDBOX');
+  const activeEnv = getBooleanEnv('EPS_IS_ACTIVE');
   const envConfig: EpsConfig = {
     merchantId: process.env.EPS_MERCHANT_ID || '',
     storeId: process.env.EPS_STORE_ID || '',
     userName: process.env.EPS_USERNAME || '',
     password: process.env.EPS_PASSWORD || '',
     hashKey: process.env.EPS_HASH_KEY || '',
-    isSandbox: process.env.EPS_IS_SANDBOX !== 'false', // default: true (sandbox)
-    isActive: process.env.EPS_IS_ACTIVE !== 'false',   // default: true (active)
+    isSandbox: sandboxEnv ?? true, // default: true (sandbox)
+    isActive: activeEnv ?? true,
   };
 
   // ── Step 2: Merge with eps-config.json if it exists (admin panel override) ──
@@ -49,8 +58,8 @@ function loadEpsConfig(): EpsConfig {
         userName: fileData.userName || envConfig.userName,
         password: fileData.password || envConfig.password,
         hashKey: fileData.hashKey || envConfig.hashKey,
-        isSandbox: fileData.isSandbox !== undefined ? fileData.isSandbox : envConfig.isSandbox,
-        isActive: fileData.isActive !== undefined ? fileData.isActive : envConfig.isActive,
+        isSandbox: sandboxEnv ?? fileData.isSandbox ?? envConfig.isSandbox,
+        isActive: activeEnv ?? fileData.isActive ?? envConfig.isActive,
       };
     }
   } catch (e) {
