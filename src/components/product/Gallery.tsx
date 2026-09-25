@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
@@ -9,6 +8,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getProductStatusMeta } from "@/utils/productStatus";
 import { IProduct } from "@/Interface/product";
 import { getMediaUrl } from "@/utils/media";
+import SafeImage from "@/components/shared/SafeImage";
 
 interface GalleryProps {
   product: Partial<IProduct> & {
@@ -68,7 +68,7 @@ function DesktopGallery({
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.08)]">
       <div className="relative h-[340px] w-full overflow-hidden bg-slate-100 md:h-[440px] xl:h-[520px]">
-        <Image
+        <SafeImage
           src={activePhoto}
           alt={`${title} - photo ${activeIndex + 1}`}
           fill
@@ -125,7 +125,7 @@ function DesktopGallery({
                 }`}
                 aria-label={`Show photo ${index + 1}`}
               >
-                <Image
+                <SafeImage
                   src={getMediaUrl(photo)}
                   alt={`${title} thumbnail ${index + 1}`}
                   fill
@@ -162,7 +162,7 @@ function MobileGallery({
       {photos.map((photo, idx) => (
         <SwiperSlide key={`${photo}-${idx}`}>
           <div className="relative h-72 w-full sm:h-80">
-            <Image
+            <SafeImage
               src={getMediaUrl(photo)}
               alt={`${title} - ${idx + 1}`}
               fill

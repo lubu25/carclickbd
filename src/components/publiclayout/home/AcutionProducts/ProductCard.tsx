@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,7 +16,7 @@ import {
 import { setSelectedProduct } from "@/Redux/Slices/productSlice";
 import { IProduct } from "@/Interface/product";
 import { getProductStatusMeta } from "@/utils/productStatus";
-import { getMediaUrl } from "@/utils/media";
+import SafeImage from "@/components/shared/SafeImage";
 import { useAppDispatch, useAppSelector } from "@/Redux/hooks";
 import { toggleAuthModal } from "@/Redux/Slices/authSlice";
 import { useAddToWatchListMutation } from "@/Redux/features/watch-list/watchlistApi";
@@ -139,12 +138,12 @@ const ProductCard = ({ product }: { product: IProduct }) => {
       className="group overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.10)] transition-[border-color,box-shadow,transform] duration-500 ease-out hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_20px_50px_rgba(15,23,42,0.16)]"
       cover={
         <div className="relative h-[230px] overflow-hidden bg-slate-100">
-          <Image
-            src={getMediaUrl(product.photos?.mainPhoto)}
+          <SafeImage
+            src={product.photos?.mainPhoto}
             alt={product.title || "Vehicle"}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            priority
+            loading="lazy"
             className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent opacity-90" />

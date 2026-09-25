@@ -636,7 +636,7 @@ const AuctionSheetsPageContent = () => {
               <div className="w-full md:w-1/2 flex flex-col gap-6">
                 <div className="border border-red-500 p-2">
                   <p className="text-lg font-bold text-black">
-                    Payment Amount: <span className="text-red-500">800 BDT</span>
+                    Payment Amount: <span className="text-red-500">750 BDT</span>
                   </p>
                 </div>
                 

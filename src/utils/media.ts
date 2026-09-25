@@ -1,40 +1,43 @@
 const BACKEND_ORIGIN = "https://carclickbd-backend.jdmcarworld.com";
+export const FALLBACK_MEDIA_URL = "/assets/shared/car.png";
 
 export const getMediaUrl = (url?: string | null) => {
-  if (!url) {
-    return "/placeholder.png";
-  }
+  if (!url?.trim()) return FALLBACK_MEDIA_URL;
+
+  const value = url.trim();
 
   // Keep backend assets on the deployed site's origin so they use the same
   // Next.js proxy as API requests.
-  if (url.startsWith(`${BACKEND_ORIGIN}/`)) {
-    return url.slice(BACKEND_ORIGIN.length);
+  try {
+    const parsed = new URL(value, BACKEND_ORIGIN);
+    if (parsed.origin === BACKEND_ORIGIN) {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    return FALLBACK_MEDIA_URL;
   }
 
   // Already an absolute URL — return as is
   if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("data:") ||
-    url.startsWith("blob:")
+    /^(https?:\/\/|data:|blob:)/i.test(value)
   ) {
-    return url;
+    return value;
   }
 
   // Relative paths starting with /uploads/ are served through the Next.js proxy.
-  if (url.startsWith("/uploads/")) {
-    return url;
+  if (value.startsWith("/uploads/")) {
+    return value;
   }
 
   // Some images might come as "uploads/..." without leading slash
-  if (url.startsWith("uploads/")) {
-    return `/${url}`;
+  if (value.startsWith("uploads/")) {
+    return `/${value}`;
   }
 
   // Any other relative path that looks like a backend asset.
-  if (url.startsWith("/") && !url.startsWith("/_next")) {
-    return url;
+  if (value.startsWith("/") && !value.startsWith("/_next")) {
+    return value;
   }
 
-  return url;
+  return value;
 };

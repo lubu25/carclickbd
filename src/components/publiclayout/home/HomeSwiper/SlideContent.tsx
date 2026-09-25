@@ -1,9 +1,8 @@
 "use client";
 import { IProduct } from "@/Interface/product";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { getMediaUrl } from "@/utils/media";
+import SafeImage from "@/components/shared/SafeImage";
 
 const SlideContent: React.FC<{ product: IProduct }> = ({ product }) => {
   return (
@@ -11,9 +10,9 @@ const SlideContent: React.FC<{ product: IProduct }> = ({ product }) => {
       <div className=" lg:h-[25rem] w-full border rounded flex flex-col lg:grid gap-3 grid-cols-12 overflow-hidden">
         {/* Main Image */}
         <div className="col-span-7 overflow-hidden h-full md:h-1/2 lg:h-full">
-          <Image
+          <SafeImage
             className="h-full w-full md:object-cover    object-center"
-            src={getMediaUrl(product.photos.mainPhoto)}
+            src={product.photos.mainPhoto}
             width={1000}
             height={500}
             alt={`Main photo of ${product.model}`}
@@ -28,9 +27,9 @@ const SlideContent: React.FC<{ product: IProduct }> = ({ product }) => {
               className="h-full overflow-hidden" // Changed height to full for consistent scaling
               key={index}
             >
-              <Image
+              <SafeImage
                 className="h-full w-full object-cover object-center" // Ensure proper scaling with object-cover
-                src={getMediaUrl(photo)}
+                src={photo}
                 width={500}
                 height={500}
                 alt={`Detail image ${index + 1} of ${product.model}`}
@@ -47,9 +46,9 @@ const SlideContent: React.FC<{ product: IProduct }> = ({ product }) => {
               className="h-full overflow-hidden " // Adjusted height to full
               key={index}
             >
-              <Image
+              <SafeImage
                 className="h-full w-full object-cover object-center" // Consistent scaling with object-cover
-                src={getMediaUrl(photo)}
+                src={photo}
                 width={500}
                 height={500}
                 alt={`Detail image ${index + 1} of ${product.model}`}

@@ -30,18 +30,15 @@ const ChangePassword: React.FC = () => {
     const { confirmPassword, ...otherPasswords } = values;
 
     try {
-      const res: any = await changePassword(otherPasswords);
-      if (res?.data?.statusCode === 200) {
-        setErrorMessage(null);
-        message.success("Password changed successfully.");
-        form.resetFields(); // Reset the form fields after successful submission
-      } else {
-        const errorMsg = res?.error?.message || "Password change failed.";
-        message.error(errorMsg);
-        setErrorMessage(errorMsg);
-      }
-    } catch {
-      setErrorMessage("An unexpected error occurred.");
+      await changePassword(otherPasswords).unwrap();
+      setErrorMessage(null);
+      message.success("Password changed successfully.");
+      form.resetFields();
+    } catch (error: any) {
+      const errorMsg =
+        error?.data?.message || error?.message || "Password change failed.";
+      message.error(errorMsg);
+      setErrorMessage(errorMsg);
     }
   };
 

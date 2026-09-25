@@ -16,9 +16,9 @@ export default function ProductDetailsPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
-  const { data, isLoading } = useGetProductByIdQuery(`${id}`, {
+  const { data, isLoading, isFetching, isError, refetch } = useGetProductByIdQuery(`${id}`, {
     skip: !id,
-    pollingInterval: 1000,
+    refetchOnMountOrArgChange: true,
   });
 
   const product = data?.data;
@@ -32,12 +32,27 @@ export default function ProductDetailsPage() {
     .join(", ");
   const statusMeta = getProductStatusMeta(product);
 
-  if (isLoading) return <ProductSkeletonContainer />;
+  if (isLoading || (!product && isFetching)) return <ProductSkeletonContainer />;
   if (!product) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold text-slate-950">Product not found</h1>
-        <p className="mt-2 text-slate-500">This vehicle is no longer available.</p>
+        <h1 className="text-2xl font-bold text-slate-950">
+          {isError ? "Unable to load this vehicle" : "Product not found"}
+        </h1>
+        <p className="mt-2 text-slate-500">
+          {isError
+            ? "The server did not respond. Please try again."
+            : "This vehicle is no longer available."}
+        </p>
+        {isError && (
+          <button
+            type="button"
+            onClick={refetch}
+            className="mt-5 rounded-md bg-slate-950 px-5 py-2 text-sm font-bold text-white hover:bg-sky-600"
+          >
+            Try again
+          </button>
+        )}
       </div>
     );
   }
