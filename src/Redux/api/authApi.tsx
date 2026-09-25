@@ -64,6 +64,7 @@ const authApi = baseApi.injectEndpoints({
         method: "PATCH",
         data: data,
       }),
+      invalidatesTags: ["auth"],
     }),
     changeEmail: build.mutation({
       query: (data: IChangeEmail) => ({

@@ -29,6 +29,9 @@ import {
 } from '@/Redux/api/paymentApi';
 import { getWhatsAppUrl } from '@/constants/siteContact';
 
+// Auction sheet purchase price — change this single value to update both UI and payment
+const AUCTION_SHEET_PRICE = 750;
+
 type ReportValue = string | number | boolean | null | undefined;
 
 const getNestedValue = (source: any, keys: string[]): ReportValue => {
@@ -274,7 +277,7 @@ const AuctionSheetsPageContent = () => {
           email: String(formData.get('email') || ''),
           mobileNumber: String(formData.get('mobile') || ''),
           address: String(formData.get('address') || ''),
-          amount: 800,
+          amount: AUCTION_SHEET_PRICE,
           termsAccepted: formData.get('termsAccepted') === 'on',
         })
       });
@@ -636,7 +639,7 @@ const AuctionSheetsPageContent = () => {
               <div className="w-full md:w-1/2 flex flex-col gap-6">
                 <div className="border border-red-500 p-2">
                   <p className="text-lg font-bold text-black">
-                    Payment Amount: <span className="text-red-500">750 BDT</span>
+                    Payment Amount: <span className="text-red-500">{AUCTION_SHEET_PRICE} BDT</span>
                   </p>
                 </div>
                 
