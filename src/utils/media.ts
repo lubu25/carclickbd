@@ -24,6 +24,10 @@ export const getMediaUrl = (url?: string | null) => {
   if (
     /^(https?:\/\/|data:|blob:)/i.test(value)
   ) {
+    if (/^http:\/\/res\.cloudinary\.com\//i.test(value)) {
+      return value.replace(/^http:/i, "https:");
+    }
+
     return value;
   }
 

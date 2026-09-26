@@ -662,6 +662,16 @@ const AuctionSheetsPageContent = () => {
                   <p>Year: <span className="uppercase text-black">{year || 'N/A'}</span></p>
                   <p>Color: <span className="uppercase text-black">{color || 'N/A'}</span></p>
                 </div>
+
+                <div className="w-full max-w-[320px] overflow-hidden rounded-md border border-slate-200 bg-white">
+                  <Image
+                    src="/assets/shared/payment-methods-verified-eps.png"
+                    alt="Payment methods verified by EPS"
+                    width={2000}
+                    height={360}
+                    className="block h-auto w-full"
+                  />
+                </div>
               </div>
 
               {/* Right Column */}

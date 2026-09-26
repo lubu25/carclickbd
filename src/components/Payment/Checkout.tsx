@@ -1,11 +1,12 @@
 "use client";
 import BDGate from "@/components/Cart/BDGate";
 import { useOrderQuery } from "@/Redux/api/orderApi";
-import { Card, Col, Row, Typography, Spin,} from "antd";
+import { Card, Col, Row, Typography, Spin } from "antd";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { LuPrinter } from "react-icons/lu";
 import { FaRegCopy } from "react-icons/fa";
+import PaymentMethodsBanner from "./PaymentMethodsBanner";
 
 const { Title, Text } = Typography;
 
@@ -42,44 +43,43 @@ const Checkout = () => {
                     Secure Payment Method
                   </Title>
                   <div className="flex flex-col gap-4">
-                    <BDGate
-                      data={order}
-                      setPaymentStatus={setPaymentStatus}
-                    />
+                    <BDGate data={order} setPaymentStatus={setPaymentStatus} />
                   </div>
+                  <PaymentMethodsBanner />
                 </div>
               </Col>
 
-                <Col xs={24} md={10}
-                  className="w-full
+              <Col
+                xs={24}
+                md={10}
+                className="w-full
              bg-[#23618b] text-white"
-                >
-                  <div className="lg:px-5 px-2 pt-2 lg:pt-5">
-                    {/* section title  */}
-                    <h2 className="font-bold   lg:text-xl  pb-2 my-2 text-white border-b-[0.5px] border-green-900">
-                      Order Summary
-                    </h2>
-                    {/* Shiiping INfo */}
-                    <div>
-                      <div className=" w-full flex items-center justify-between text-sm md:text-md  xl:text-lg py-2  border-b-[0.5px] border-green-900">
-                      <p className="text-white">
-                        Order Name:
-                      </p>
+              >
+                <div className="lg:px-5 px-2 pt-2 lg:pt-5">
+                  {/* section title  */}
+                  <h2 className="font-bold   lg:text-xl  pb-2 my-2 text-white border-b-[0.5px] border-green-900">
+                    Order Summary
+                  </h2>
+                  {/* Shiiping INfo */}
+                  <div>
+                    <div className=" w-full flex items-center justify-between text-sm md:text-md  xl:text-lg py-2  border-b-[0.5px] border-green-900">
+                      <p className="text-white">Order Name:</p>
                       <p className="text-lg  font-bold uppercase text-yellow-500">
                         {order?.orderType}
                       </p>
-                      </div>
                     </div>
                   </div>
-                  <section className="w-full p-5 h-[30%] bg-[#004979] text-white text-sm md:text-lg lg:text-xl">
+                </div>
+                <section className="w-full p-5 h-[30%] bg-[#004979] text-white text-sm md:text-lg lg:text-xl">
                   <h2 className="flex items-center justify-between font-semibold ">
                     <span>Total Price</span>{" "}
                     <span className="font-bold text-xl lg:text-2xl">
-                    BDT {Number(order?.totalAmount || 0).toLocaleString("en-US")}
+                      BDT{" "}
+                      {Number(order?.totalAmount || 0).toLocaleString("en-US")}
                     </span>
                   </h2>
                   <button className="py-3 text-sm md:text-md xl:text-lg text-center text-gray-800 font-bold mt-5 w-full rounded-full bg-orange-400 hover:bg-orange-300 transition-colors duration-300">
-                  <Text
+                    <Text
                       type={paymentStatus ? "success" : "secondary"}
                       className={`font-bold ${
                         paymentStatus ? "text-green-500" : "text-gray-200"
@@ -104,7 +104,7 @@ const Checkout = () => {
                     </button>
                   </div>
                 </section>
-                </Col>                
+              </Col>
             </Row>
           )}
         </div>

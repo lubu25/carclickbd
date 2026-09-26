@@ -1,22 +1,22 @@
-
-import React from 'react';
-import { Modal, Typography, Button, Row, Col } from 'antd';
-import { LuPrinter } from 'react-icons/lu';
-import { FaRegCopy } from 'react-icons/fa';
-import BDGate from '@/components/Cart/BDGate';
-import { IOrder } from '@/Interface/order';
+import React from "react";
+import { Modal, Typography, Button, Row, Col } from "antd";
+import { LuPrinter } from "react-icons/lu";
+import { FaRegCopy } from "react-icons/fa";
+import BDGate from "@/components/Cart/BDGate";
+import { IOrder } from "@/Interface/order";
+import PaymentMethodsBanner from "@/components/Payment/PaymentMethodsBanner";
 
 const { Title, Text } = Typography;
 
 interface OrderSummaryModalProps {
-      isOpen: boolean;
-      onClose: () => void;
-      order: IOrder | null;
-      onPaymentSuccess: (paymentMethod: string) => void;
-      totalAmount: number | null; // Added totalAmount prop
-      paymentStatus: string | null; // Added paymentStatus prop
-      setPaymentStatus: (status: string | null) => void; // Added setPaymentStatus prop
-    }
+  isOpen: boolean;
+  onClose: () => void;
+  order: IOrder | null;
+  onPaymentSuccess: (paymentMethod: string) => void;
+  totalAmount: number | null; // Added totalAmount prop
+  paymentStatus: string | null; // Added paymentStatus prop
+  setPaymentStatus: (status: string | null) => void; // Added setPaymentStatus prop
+}
 
 const PaymentModal: React.FC<OrderSummaryModalProps> = ({
   isOpen,
@@ -47,6 +47,7 @@ const PaymentModal: React.FC<OrderSummaryModalProps> = ({
             <div className="flex flex-col gap-4">
               <BDGate data={order} setPaymentStatus={setPaymentStatus} />
             </div>
+            <PaymentMethodsBanner />
           </div>
         </Col>
 
