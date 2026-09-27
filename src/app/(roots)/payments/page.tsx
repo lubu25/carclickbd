@@ -42,6 +42,7 @@ function PaymentPageContent() {
           ? `/auction-sheets?${new URLSearchParams({
               ...(chassis ? { chassis } : {}),
               ...(paymentId ? { payment_id: paymentId } : {}),
+              ...(status ? { status } : {}),
             }).toString()}`
           : '/auction-sheets',
       );
@@ -98,6 +99,7 @@ function PaymentPageContent() {
                     ? `/auction-sheets?${new URLSearchParams({
                         ...(chassis ? { chassis } : {}),
                         ...(paymentId ? { payment_id: paymentId } : {}),
+                        ...(status ? { status } : {}),
                       }).toString()}`
                     : '/auction-sheets',
                 );

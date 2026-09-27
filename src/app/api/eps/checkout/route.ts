@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       totalAmount: Number(amount),
       ipAddress: '0.0.0.0',
       version: '1',
-      successUrl: `${baseUrl}/payments?status=success&order=${orderId}`,
+      successUrl: `${baseUrl}/payments?status=success&order=${orderId}${chassis ? `&chassis=${encodeURIComponent(chassis)}` : ''}`,
       failUrl: `${baseUrl}/payments?status=fail&order=${orderId}`,
       cancelUrl: `${baseUrl}/payments?status=cancel&order=${orderId}`,
       customerName: name || 'Guest User',

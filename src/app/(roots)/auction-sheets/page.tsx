@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
+import { Spin } from 'antd';
 import {
   useCreateAuctionSheetOrderMutation,
   useLazyGetAuctionSheetReportQuery,
@@ -163,8 +164,11 @@ const AuctionSheetsPageContent = () => {
   const searchParams = useSearchParams() ?? new URLSearchParams();
   const chassis = searchParams.get('chassis') || '';
   const paymentId = searchParams.get('payment_id') || '';
+  const statusParam = searchParams.get('status') || '';
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseError, setPurchaseError] = useState('');
+  const [frontendJpcenterData, setFrontendJpcenterData] = useState<any>(null);
+  const [isFrontendDownloading, setIsFrontendDownloading] = useState(false);
   const automaticDownloadStarted = useRef(false);
   const [getAuctionSheetReport, { data, error, isFetching }] =
     useLazyGetAuctionSheetReportQuery();
@@ -178,8 +182,29 @@ const AuctionSheetsPageContent = () => {
 
   const paymentStatus =
     paymentStatusResponse?.data?.data || paymentStatusResponse?.data;
-  const isPaymentPaid = paymentStatus?.paid === true;
-  const downloadUrl = paymentStatus?.download_url;
+  const isPaymentPaid = paymentStatus?.paid === true || statusParam === 'success';
+  const downloadUrl = frontendJpcenterData?.pdfUrl || paymentStatus?.download_url || (frontendJpcenterData?.images?.[0]);
+
+  useEffect(() => {
+    if (statusParam === 'success' && chassis && !frontendJpcenterData && !isFrontendDownloading && !purchaseError) {
+      setIsFrontendDownloading(true);
+      fetch(`/api/jpcenter/download?chassis=${chassis}`)
+        .then(res => res.json())
+        .then(data => {
+           setIsFrontendDownloading(false);
+           if (data.success) {
+             setFrontendJpcenterData(data);
+             setPurchaseError('');
+           } else {
+             setPurchaseError(data.error || 'Failed to download auction sheet. Please contact CarClickBD.');
+           }
+        })
+        .catch(() => {
+           setIsFrontendDownloading(false);
+           setPurchaseError('Failed to connect to download server. Please contact CarClickBD.');
+        });
+    }
+  }, [statusParam, chassis, frontendJpcenterData, isFrontendDownloading, purchaseError]);
 
   useEffect(() => {
     const cleanChassis = chassis.trim();
@@ -311,7 +336,9 @@ const AuctionSheetsPageContent = () => {
   const handleDownloadOrPurchase = () => {
     if (isPaymentPaid) {
       if (downloadUrl) {
-        window.location.assign(downloadUrl);
+        window.open(downloadUrl, '_blank');
+      } else if (isFrontendDownloading) {
+        setPurchaseError('Please wait, downloading your auction sheet...');
       } else {
         setPurchaseError(
           'Payment is confirmed, but the auction sheet file is not available yet. Please contact CarClickBD.',
@@ -389,7 +416,12 @@ const AuctionSheetsPageContent = () => {
                       onClick={handleDownloadOrPurchase}
                       className="relative flex h-[120px] w-full max-w-[260px] shrink-0 cursor-pointer items-center justify-center bg-white transition hover:opacity-80"
                     >
-                      {sheetImage ? (
+                      {isFrontendDownloading ? (
+                        <div className="flex flex-col items-center justify-center gap-2 p-4">
+                           <Spin />
+                           <span className="text-xs font-semibold text-slate-600">Preparing PDF...</span>
+                        </div>
+                      ) : sheetImage ? (
                         <Image
                           src={sheetImage}
                           alt={`Auction sheet preview for ${chassis}`}
