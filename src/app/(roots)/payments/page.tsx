@@ -36,6 +36,28 @@ function PaymentPageContent() {
   useEffect(() => {
     if (status !== 'success' || !isAuctionSheetPayment) return;
 
+    if (typeof window !== 'undefined') {
+      const pendingData = window.localStorage.getItem('pendingAuctionOrder');
+      if (pendingData) {
+        try {
+          const parsedData = JSON.parse(pendingData);
+          if (parsedData.chassis === chassis || (!chassis && parsedData.chassis)) {
+            // Include download URL
+            parsedData.downloadUrl = window.location.origin + `/auction-sheets?status=success&payment_id=${paymentId}&chassis=${parsedData.chassis}`;
+            fetch('/api/auction-sheet/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(parsedData)
+            }).catch(e => console.error('Failed to send email:', e));
+            
+            window.localStorage.removeItem('pendingAuctionOrder');
+          }
+        } catch (e) {
+          console.error('Failed to parse pending auction order data');
+        }
+      }
+    }
+
     const timeout = window.setTimeout(() => {
       router.replace(
         chassis || paymentId

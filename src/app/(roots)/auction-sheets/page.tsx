@@ -291,6 +291,23 @@ const AuctionSheetsPageContent = () => {
     }
 
     try {
+      const name = String(formData.get('name') || '');
+      const email = String(formData.get('email') || '');
+      const mobileNumber = String(formData.get('mobile') || '');
+      const address = String(formData.get('address') || '');
+      
+      // Save data to localStorage to send email from frontend after success
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('pendingAuctionOrder', JSON.stringify({
+          chassis: cleanChassis,
+          name,
+          email,
+          mobileNumber,
+          address,
+          amount: AUCTION_SHEET_PRICE
+        }));
+      }
+
       // Bypass the failing backend /auction-sheet/order endpoint
       // and directly hit our Next.js API route to initiate EPS Checkout
       const response = await fetch('/api/eps/checkout', {
@@ -298,10 +315,10 @@ const AuctionSheetsPageContent = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chassis: cleanChassis,
-          name: String(formData.get('name') || ''),
-          email: String(formData.get('email') || ''),
-          mobileNumber: String(formData.get('mobile') || ''),
-          address: String(formData.get('address') || ''),
+          name,
+          email,
+          mobileNumber,
+          address,
           amount: AUCTION_SHEET_PRICE,
           termsAccepted: formData.get('termsAccepted') === 'on',
         })
@@ -314,7 +331,6 @@ const AuctionSheetsPageContent = () => {
       }
 
       const paymentUrl = paymentResponse?.data?.payment_url;
-
 
       if (!paymentUrl) {
         throw new Error(
