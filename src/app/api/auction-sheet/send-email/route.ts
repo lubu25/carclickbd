@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     `;
 
     // Fetch PDF to attach
-    const attachments = [];
+    const attachments: any[] = [];
     try {
       const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE;
       if (apiCode) {
@@ -49,15 +49,15 @@ export async function POST(request: Request) {
           const reportUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}&key=${record.key}`;
           const reportRes = await fetch(reportUrl, { signal: AbortSignal.timeout(15000) });
           const reportText = await reportRes.text();
-          let pdfUrl = null;
+          let pdfUrl: string | null = null;
           
           try {
             const reportJson = JSON.parse(reportText);
             const possiblePdf = Object.values(reportJson).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
-            if (possiblePdf) pdfUrl = possiblePdf;
+            if (possiblePdf) pdfUrl = String(possiblePdf);
           } catch (e) {
              const match = reportText.match(/href="([^"]+\.pdf)"/i);
-             if (match && match[1]) pdfUrl = match[1];
+             if (match && match[1]) pdfUrl = String(match[1]);
           }
 
           if (pdfUrl) {
