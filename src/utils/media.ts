@@ -36,7 +36,7 @@ export const getMediaUrl = (url?: string | null) => {
       : undefined;
 
     if (uploadPath) {
-      return `${uploadPath}${parsed.search}${parsed.hash}`;
+      return `${BACKEND_ORIGIN}${uploadPath}${parsed.search}${parsed.hash}`;
     }
 
     if (isBackendHost && /^https?:\/\//i.test(value)) {
@@ -45,7 +45,7 @@ export const getMediaUrl = (url?: string | null) => {
     }
 
     if (parsed.origin === BACKEND_ORIGIN && !/^https?:\/\//i.test(value)) {
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      return `${BACKEND_ORIGIN}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
   } catch {
     if (/^https?:\/\//i.test(value)) return FALLBACK_MEDIA_URL;
