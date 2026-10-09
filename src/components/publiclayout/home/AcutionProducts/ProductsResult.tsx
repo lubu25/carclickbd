@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo } from "react";
-import { Button,  Row, Col, Empty, Pagination } from "antd";
+import { Button, Row, Col, Empty, Pagination } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
 import { IProduct } from "@/Interface/product";
@@ -27,21 +27,34 @@ const ProductsResult = ({
   className,
   isWinner,
   isDraft,
-  isFeatured
-}:AuctionProductsProps) => {
+  isFeatured,
+}: AuctionProductsProps) => {
   const searchParams = useSearchParams() ?? new URLSearchParams();
 
   const filters = useMemo(() => {
     const baseFilters: { name: string; value?: any }[] = [];
 
-    if (isWinner !== undefined) baseFilters.push({ name: "isWinner", value: isWinner });
-    if (isDraft !== undefined) baseFilters.push({ name: "isDraft", value: isDraft });
-    if (isFeatured !== undefined) baseFilters.push({ name: "isFeatured", value: isFeatured });
+    if (isWinner !== undefined)
+      baseFilters.push({ name: "isWinner", value: isWinner });
+    if (isDraft !== undefined)
+      baseFilters.push({ name: "isDraft", value: isDraft });
+    if (isFeatured !== undefined)
+      baseFilters.push({ name: "isFeatured", value: isFeatured });
 
-    if (searchParams.get("make")) baseFilters.push({ name: "maker", value: searchParams.get("make") });
-    if (searchParams.get("model")) baseFilters.push({ name: "model", value: searchParams.get("model") });
-    if (searchParams.get("transmission")) baseFilters.push({ name: "transmission", value: searchParams.get("transmission") });
-    if (searchParams.get("bodyStyle")) baseFilters.push({ name: "bodyType", value: searchParams.get("bodyStyle") });
+    if (searchParams.get("make"))
+      baseFilters.push({ name: "maker", value: searchParams.get("make") });
+    if (searchParams.get("model"))
+      baseFilters.push({ name: "model", value: searchParams.get("model") });
+    if (searchParams.get("transmission"))
+      baseFilters.push({
+        name: "transmission",
+        value: searchParams.get("transmission"),
+      });
+    if (searchParams.get("bodyStyle"))
+      baseFilters.push({
+        name: "bodyType",
+        value: searchParams.get("bodyStyle"),
+      });
     if (searchParams.get("condition")) {
       const condition = searchParams.get("condition") as string;
       baseFilters.push({
@@ -56,38 +69,65 @@ const ProductsResult = ({
         value: statusQueryMap[status] || status,
       });
     }
-    if (searchParams.get("searchTerm")) baseFilters.push({ name: "searchTerm", value: searchParams.get("searchTerm") });
+    if (searchParams.get("searchTerm"))
+      baseFilters.push({
+        name: "searchTerm",
+        value: searchParams.get("searchTerm"),
+      });
     if (searchParams.get("startYear") && searchParams.get("endYear")) {
-      baseFilters.push({ name: "startYear", value: parseInt(searchParams.get("startYear")!) });
-      baseFilters.push({ name: "endYear", value: parseInt(searchParams.get("endYear")!) });
+      baseFilters.push({
+        name: "startYear",
+        value: parseInt(searchParams.get("startYear")!),
+      });
+      baseFilters.push({
+        name: "endYear",
+        value: parseInt(searchParams.get("endYear")!),
+      });
     }
 
     return baseFilters;
-  }, [isWinner, isDraft,isFeatured, searchParams]);
+  }, [isWinner, isDraft, isFeatured, searchParams]);
 
-  const { data, isLoading } = useGetAllProductQuery(filters);
+  const { data, isLoading, isError, refetch } = useGetAllProductQuery(filters);
   const rawProducts: IProduct[] = useMemo(() => data?.data || [], [data]);
 
   const products: IProduct[] = useMemo(() => {
     return rawProducts;
   }, [rawProducts]);
-  
 
   const sortedProducts = useMemo(() => {
     const sortParam = searchParams.get("sort");
     switch (sortParam) {
       case "listed":
-        return [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...products].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
       case "newest":
-        return [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return [...products].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
       case "lowestMileage":
-        return [...products].sort((a, b) => (parseFloat(a.mileage) || 0) - (parseFloat(b.mileage) || 0));
+        return [...products].sort(
+          (a, b) => (parseFloat(a.mileage) || 0) - (parseFloat(b.mileage) || 0),
+        );
       case "highestMileage":
-        return [...products].sort((a, b) => (parseFloat(b.mileage) || 0) - (parseFloat(a.mileage) || 0));
+        return [...products].sort(
+          (a, b) => (parseFloat(b.mileage) || 0) - (parseFloat(a.mileage) || 0),
+        );
       case "HighestPrice":
-        return [...products].sort((a, b) => Number(b.mainPrice || b.highestBid || 0) - Number(a.mainPrice || a.highestBid || 0));
+        return [...products].sort(
+          (a, b) =>
+            Number(b.mainPrice || b.highestBid || 0) -
+            Number(a.mainPrice || a.highestBid || 0),
+        );
       case "LowestPrice":
-        return [...products].sort((a, b) => Number(a.mainPrice || a.highestBid || 0) - Number(b.mainPrice || b.highestBid || 0));
+        return [...products].sort(
+          (a, b) =>
+            Number(a.mainPrice || a.highestBid || 0) -
+            Number(b.mainPrice || b.highestBid || 0),
+        );
       default:
         return products;
     }
@@ -104,6 +144,18 @@ const ProductsResult = ({
           </Col>
         ))}
       </Row>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section className="mt-6">
+        <Empty description="Car listings could not be loaded. Please try again.">
+          <Button type="primary" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </Empty>
+      </section>
     );
   }
 
