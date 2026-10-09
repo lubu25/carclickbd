@@ -35,8 +35,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    const smtpEmail = process.env.SMTP_EMAIL || process.env.EMAIL;
-    const smtpPassword = process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD;
+    const smtpEmail = process.env.SMTP_EMAIL || process.env.EMAIL || process.env.NEXT_PUBLIC_SMTP_EMAIL || process.env.NEXT_PUBLIC_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD || process.env.NEXT_PUBLIC_SMTP_PASSWORD || process.env.NEXT_PUBLIC_EMAIL_PASSWORD;
 
     if (!smtpEmail || !smtpPassword) {
       console.error('SMTP credentials not configured in environment variables.');
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     let pdfUrl: string | null = downloadUrl && downloadUrl.includes('.pdf') ? downloadUrl : null;
 
     try {
-      const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE;
+      const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE || '3574926_42351f64ee17f62f8729d3d527c35dca';
       if (apiCode && !pdfUrl) {
         // Only call JPCenter if we don't already have a PDF url
         const lookupUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}`;
