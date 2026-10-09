@@ -25,23 +25,12 @@ const VerifyAuctionSheetPage = () => {
     }
 
     try {
-      const response = await checkChassis(chassis).unwrap();
-      const lookup = (response as any)?.data?.data || response?.data;
-
-      if (!lookup?.found) {
-        setSearchError(
-          "এই chassis number-এর কোনো auction record পাওয়া যায়নি। সঠিক chassis number দিয়ে আবার চেষ্টা করুন.",
-        );
-        return;
-      }
-
-      router.push(`/auction-sheets?chassis=${encodeURIComponent(chassis)}`);
+      await checkChassis(chassis).unwrap();
     } catch (error: any) {
-      setSearchError(
-        error?.data?.message ||
-          error?.message ||
-          "Chassis number যাচাই করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন.",
-      );
+      console.error('Chassis check failed:', error);
+    } finally {
+      // Always redirect to the results page to show whatever is available or allow manual request
+      router.push(`/auction-sheets?chassis=${encodeURIComponent(chassis)}`);
     }
   };
 
