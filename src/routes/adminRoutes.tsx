@@ -78,6 +78,7 @@ const adminRoutes: IDNavMenuItem[] = ([
     label: "Marketing",
     children: [
       { label: "Promo Offers", route: "/admin/offer" },
+      { label: "Coupons", route: "/admin/coupons" },
       { label: "Flash Deals", route: "/admin/marketing/flash-deals" },
       { label: "Dynamic Pop-up", route: "/admin/marketing/dynamic-pop-up" },
       { label: "Custom Alerts", route: "/admin/custom-alerts" },

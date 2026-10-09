@@ -168,6 +168,37 @@ const AuctionSheetsPageContent = () => {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseError, setPurchaseError] = useState('');
   const [frontendJpcenterData, setFrontendJpcenterData] = useState<any>(null);
+  
+  const [couponCode, setCouponCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsApplyingCoupon(true);
+    setCouponMessage({ text: '', type: '' });
+    try {
+      const response = await fetch('/api/coupons/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, amount: AUCTION_SHEET_PRICE })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDiscountAmount(data.data.discount);
+        setCouponMessage({ text: `Coupon applied: ${data.data.discount} BDT off`, type: 'success' });
+      } else {
+        setDiscountAmount(0);
+        setCouponMessage({ text: data.message || 'Invalid coupon', type: 'error' });
+      }
+    } catch (e) {
+      setDiscountAmount(0);
+      setCouponMessage({ text: 'Error applying coupon', type: 'error' });
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
   const [isFrontendDownloading, setIsFrontendDownloading] = useState(false);
   const reportFetchStarted = useRef(false);
   const automaticDownloadStarted = useRef(false);
@@ -315,6 +346,8 @@ const AuctionSheetsPageContent = () => {
       const mobileNumber = String(formData.get('mobile') || '');
       const address = String(formData.get('address') || '');
       
+      const finalAmount = AUCTION_SHEET_PRICE - discountAmount;
+
       // Save data to localStorage to send email from frontend after success
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('pendingAuctionOrder', JSON.stringify({
@@ -323,8 +356,15 @@ const AuctionSheetsPageContent = () => {
           email,
           mobileNumber,
           address,
-          amount: AUCTION_SHEET_PRICE
+          amount: finalAmount
         }));
+      }
+
+      // Bypass EPS Checkout if final amount is 0
+      if (finalAmount <= 0) {
+        const orderId = `TEST_${Date.now()}`;
+        window.location.assign(`/payments?status=success&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`);
+        return;
       }
 
       // Bypass the failing backend /auction-sheet/order endpoint
@@ -338,7 +378,7 @@ const AuctionSheetsPageContent = () => {
           email,
           mobileNumber,
           address,
-          amount: AUCTION_SHEET_PRICE,
+          amount: finalAmount,
           termsAccepted: formData.get('termsAccepted') === 'on',
         })
       });
@@ -751,7 +791,8 @@ const AuctionSheetsPageContent = () => {
               <div className="w-full md:w-1/2 flex flex-col gap-6">
                 <div className="border border-red-500 p-2">
                   <p className="text-lg font-bold text-black">
-                    Payment Amount: <span className="text-red-500">{AUCTION_SHEET_PRICE} BDT</span>
+                    Payment Amount: <span className="text-red-500">{AUCTION_SHEET_PRICE - discountAmount} BDT</span>
+                    {discountAmount > 0 && <span className="text-sm line-through text-gray-400 ml-2">{AUCTION_SHEET_PRICE} BDT</span>}
                   </p>
                 </div>
                 
@@ -810,6 +851,33 @@ const AuctionSheetsPageContent = () => {
                   <div>
                     <label className="mb-2 block text-sm font-bold text-black">Address:</label>
                     <textarea required name="address" rows={3} placeholder="address" className="w-full border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05] resize-none" />
+                  </div>
+                  
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-black">Coupon Code (Optional):</label>
+                    <div className="flex gap-2">
+                      <input 
+                        name="couponCode" 
+                        type="text" 
+                        placeholder="Enter coupon code" 
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        className="flex-1 border border-gray-300 px-4 py-2.5 outline-none focus:border-[#F5BD05]" 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon || !couponCode}
+                        className="px-4 py-2.5 bg-gray-800 text-white font-bold hover:bg-gray-700 transition disabled:opacity-50"
+                      >
+                        {isApplyingCoupon ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                    {couponMessage.text && (
+                      <p className={`mt-1 text-sm font-bold ${couponMessage.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+                        {couponMessage.text}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-2 pt-2">
