@@ -31,7 +31,7 @@ import {
 import { getWhatsAppUrl } from '@/constants/siteContact';
 
 // Auction sheet purchase price — change this single value to update both UI and payment
-const AUCTION_SHEET_PRICE = 10;
+const AUCTION_SHEET_PRICE = 750;
 
 type ReportValue = string | number | boolean | null | undefined;
 
