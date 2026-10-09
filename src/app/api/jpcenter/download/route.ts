@@ -62,9 +62,11 @@ export async function GET(request: Request) {
 
     // Attempt to extract PDF URL
     let pdfUrl = null;
+    let source = null;
     if (reportJson) {
+       source = Array.isArray(reportJson) ? reportJson[0] : reportJson;
        // Look for string containing pdf
-       const possiblePdf = Object.values(reportJson).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
+       const possiblePdf = Object.values(source).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
        if (possiblePdf) pdfUrl = possiblePdf;
     }
 
@@ -78,13 +80,13 @@ export async function GET(request: Request) {
 
     // Fallback: If no PDF, get the high-res image URLs
     let images: string[] = [];
-    if (!pdfUrl && reportJson && Array.isArray(reportJson.images)) {
-       images = reportJson.images.map((img: any) => img.url || img);
+    if (!pdfUrl && source && Array.isArray(source.images)) {
+       images = source.images.map((img: any) => img.url || img);
     }
     
     // Additional JPCenter fallback format for images array
-    if (!pdfUrl && images.length === 0 && reportJson && Array.isArray(reportJson.aj)) {
-       images = reportJson.aj.filter((r: any) => r && r.image).map((r: any) => r.image);
+    if (!pdfUrl && images.length === 0 && source && Array.isArray(source.aj)) {
+       images = source.aj.filter((r: any) => r && r.image).map((r: any) => r.image);
     }
 
     if (!pdfUrl && images.length === 0) {

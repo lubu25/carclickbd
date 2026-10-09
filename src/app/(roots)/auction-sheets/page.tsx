@@ -186,25 +186,44 @@ const AuctionSheetsPageContent = () => {
   const downloadUrl = frontendJpcenterData?.pdfUrl || paymentStatus?.download_url || (frontendJpcenterData?.images?.[0]);
 
   useEffect(() => {
-    if (statusParam === 'success' && chassis && !frontendJpcenterData && !isFrontendDownloading && !purchaseError) {
+    if (statusParam === 'success' && chassis && !frontendJpcenterData && !isFrontendDownloading) {
       setIsFrontendDownloading(true);
+      setPurchaseError('');
       fetch(`/api/jpcenter/download?chassis=${chassis}`)
         .then(res => res.json())
-        .then(data => {
-           setIsFrontendDownloading(false);
-           if (data.success) {
-             setFrontendJpcenterData(data);
-             setPurchaseError('');
-           } else {
-             setPurchaseError(data.error || 'Failed to download auction sheet. Please contact CarClickBD.');
-           }
+        .then(json => {
+          setIsFrontendDownloading(false);
+          if (json.success && (json.pdfUrl || json.images?.length)) {
+            setFrontendJpcenterData(json);
+          } else {
+            setPurchaseError(json.error || 'Could not retrieve the auction sheet. Please contact CarClickBD.');
+          }
         })
         .catch(() => {
-           setIsFrontendDownloading(false);
-           setPurchaseError('Failed to connect to download server. Please contact CarClickBD.');
+          setIsFrontendDownloading(false);
+          setPurchaseError('Connection error. Please contact CarClickBD.');
         });
     }
-  }, [statusParam, chassis, frontendJpcenterData, isFrontendDownloading, purchaseError]);
+  }, [statusParam, chassis]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-download the PDF as soon as it's available after payment
+  useEffect(() => {
+    if (
+      statusParam !== 'success' ||
+      !downloadUrl ||
+      automaticDownloadStarted.current
+    ) {
+      return;
+    }
+    automaticDownloadStarted.current = true;
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `auction-sheet-${chassis || 'report'}.pdf`;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, [downloadUrl, statusParam, chassis]);
 
   useEffect(() => {
     const cleanChassis = chassis.trim();
@@ -214,39 +233,13 @@ const AuctionSheetsPageContent = () => {
 
   useEffect(() => {
     if (!paymentId || isPaymentPaid) return;
-
     getAuctionSheetPaymentStatus(paymentId);
     const interval = window.setInterval(() => {
       getAuctionSheetPaymentStatus(paymentId);
     }, 3000);
-
     return () => window.clearInterval(interval);
   }, [getAuctionSheetPaymentStatus, isPaymentPaid, paymentId]);
 
-  useEffect(() => {
-    automaticDownloadStarted.current = false;
-  }, [paymentId]);
-
-  useEffect(() => {
-    if (
-      !paymentId ||
-      !isPaymentPaid ||
-      !downloadUrl ||
-      automaticDownloadStarted.current
-    ) {
-      return;
-    }
-
-    automaticDownloadStarted.current = true;
-    setPurchaseError('');
-    const downloadLink = document.createElement('a');
-    downloadLink.href = downloadUrl;
-    downloadLink.download = '';
-    downloadLink.rel = 'noopener';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-  }, [downloadUrl, isPaymentPaid, paymentId]);
 
   const reportEnvelope = data?.data;
   const reportData = (reportEnvelope as any)?.data || reportEnvelope || data;
@@ -415,64 +408,86 @@ const AuctionSheetsPageContent = () => {
             ) : (
               <div className="space-y-8">
                 <div className="space-y-4 text-center">
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-[#e50914]">
-                      Click on the chassis image to get the true report
-                    </p>
-                    <p className="text-sm font-bold text-black">
-                      অকশন শীট ভ্যারিফাই করতে নিচের ছবিতে ক্লিক করুন ।
-                    </p>
-                  </div>
-
-                  <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 border-2 border-[#4A90E2] p-6 sm:flex-row sm:items-start sm:p-8">
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      aria-label="Download auction sheet"
-                      onClick={handleDownloadOrPurchase}
-                      className="relative flex h-[120px] w-full max-w-[260px] shrink-0 cursor-pointer items-center justify-center bg-white transition hover:opacity-80"
-                    >
-                      {isFrontendDownloading ? (
-                        <div className="flex flex-col items-center justify-center gap-2 p-4">
-                           <Spin />
-                           <span className="text-xs font-semibold text-slate-600">Preparing PDF...</span>
-                        </div>
-                      ) : sheetImage ? (
-                        <Image
-                          src={sheetImage}
-                          alt={`Auction sheet preview for ${chassis}`}
-                          fill
-                          className="object-contain"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center border border-gray-300 p-4 text-center text-xs font-bold text-slate-500">
-                          Image preview
-                        </div>
-                      )}
+                  {isPaymentPaid && isFrontendDownloading ? (
+                    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 border-2 border-[#4A90E2] bg-white p-12">
+                      <Spin size="large" />
+                      <p className="text-base font-bold text-slate-700">Fetching your auction sheet report…</p>
+                      <p className="text-sm font-medium text-slate-500">This may take a few seconds. Please wait.</p>
                     </div>
-
-                    <div className="flex w-full flex-col space-y-4 text-left sm:w-auto">
-                      <p className="text-xl font-bold text-black md:text-2xl">
-                        Model:{' '}
-                        <span className="uppercase text-[#e50914]">
-                          {isFetching ? 'Checking...' : (model || 'N/A')}
-                        </span>
-                      </p>
-                      <p className="text-xl font-bold text-black md:text-2xl">
-                        Year:{' '}
-                        <span className="uppercase text-[#e50914]">
-                          {isFetching ? 'Checking...' : (year || 'N/A')}
-                        </span>
-                      </p>
-                      <p className="text-xl font-bold text-black md:text-2xl">
-                        Color:{' '}
-                        <span className="uppercase text-[#e50914]">
-                          {isFetching ? 'Checking...' : (color || 'N/A')}
-                        </span>
-                      </p>
+                  ) : isPaymentPaid && downloadUrl ? (
+                    <div className="mx-auto w-full max-w-4xl border-2 border-[#4A90E2] bg-white p-2 sm:p-4">
+                      <div className="mb-4 flex flex-col items-center justify-between gap-4 sm:flex-row">
+                        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Your Verified Auction Sheet</h2>
+                        <button
+                          onClick={() => window.open(downloadUrl, '_blank')}
+                          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-6 text-sm font-black text-slate-950 transition hover:bg-[#e4ad00]"
+                        >
+                          Download PDF
+                        </button>
+                      </div>
+                      <iframe
+                        src={`${downloadUrl}#toolbar=0`}
+                        className="h-[600px] w-full border border-slate-200 md:h-[800px]"
+                        title="Auction Sheet PDF"
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-[#e50914]">
+                          Click on the chassis image to get the true report
+                        </p>
+                        <p className="text-sm font-bold text-black">
+                          অকশন শীট ভ্যারিফাই করতে নিচের ছবিতে ক্লিক করুন ।
+                        </p>
+                      </div>
+
+                      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 border-2 border-[#4A90E2] p-6 sm:flex-row sm:items-start sm:p-8">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Download auction sheet"
+                          onClick={handleDownloadOrPurchase}
+                          className="relative flex h-[120px] w-full max-w-[260px] shrink-0 cursor-pointer items-center justify-center bg-white transition hover:opacity-80"
+                        >
+                          {sheetImage ? (
+                            <Image
+                              src={sheetImage}
+                              alt={`Auction sheet preview for ${chassis}`}
+                              fill
+                              className="object-contain"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center border border-gray-300 p-4 text-center text-xs font-bold text-slate-500">
+                              Image preview
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex w-full flex-col space-y-4 text-left sm:w-auto">
+                          <p className="text-xl font-bold text-black md:text-2xl">
+                            Model:{' '}
+                            <span className="uppercase text-[#e50914]">
+                              {isFetching ? 'Checking...' : (model || 'N/A')}
+                            </span>
+                          </p>
+                          <p className="text-xl font-bold text-black md:text-2xl">
+                            Year:{' '}
+                            <span className="uppercase text-[#e50914]">
+                              {isFetching ? 'Checking...' : (year || 'N/A')}
+                            </span>
+                          </p>
+                          <p className="text-xl font-bold text-black md:text-2xl">
+                            Color:{' '}
+                            <span className="uppercase text-[#e50914]">
+                              {isFetching ? 'Checking...' : (color || 'N/A')}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex justify-center">

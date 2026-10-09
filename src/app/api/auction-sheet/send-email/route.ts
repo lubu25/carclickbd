@@ -57,54 +57,56 @@ export async function POST(request: Request) {
     let vehicleColor = 'N/A';
     let vehicleGrade = 'N/A';
     let imageUrl = '';
-    let pdfUrl: string | null = null;
+    let pdfUrl: string | null = downloadUrl && downloadUrl.includes('.pdf') ? downloadUrl : null;
 
     try {
       const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE;
-      if (apiCode) {
+      if (apiCode && !pdfUrl) {
+        // Only call JPCenter if we don't already have a PDF url
         const lookupUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}`;
         const lookupRes = await fetch(lookupUrl, { signal: AbortSignal.timeout(15000) });
         const lookupJson = await lookupRes.json();
         const records = Array.isArray(lookupJson?.aj) ? lookupJson.aj.filter((r: any) => r && typeof r === 'object') : [];
         const record = records.find((item: any) => String(item.key || '').trim());
-        
+
         if (record?.key) {
           const reportUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}&key=${record.key}`;
           const reportRes = await fetch(reportUrl, { signal: AbortSignal.timeout(15000) });
           const reportText = await reportRes.text();
-          
+
           try {
             const reportJson = JSON.parse(reportText);
-            const possiblePdf = Object.values(reportJson).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
+            const source = Array.isArray(reportJson) ? reportJson[0] : reportJson;
+            const possiblePdf = Object.values(source).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
             if (possiblePdf) pdfUrl = String(possiblePdf);
 
-            const source = Array.isArray(reportJson) ? reportJson[0] : reportJson;
             vehicleModel = String(getNestedValue(source, ['model', 'car_model', 'carModel', 'name']) || 'N/A');
             vehicleYear = String(getNestedValue(source, ['year', 'car_year', 'production_year', 'productionYear', 'model_year']) || 'N/A');
             vehicleColor = String(getNestedValue(source, ['car_color', 'color', 'colour']) || 'N/A');
             vehicleGrade = String(getNestedValue(source, ['grade', 'auction_grade', 'auctionGrade', 'car_grade']) || 'N/A');
             imageUrl = getNestedImage(source);
           } catch (e) {
-             const match = reportText.match(/href="([^"]+\.pdf)"/i);
-             if (match && match[1]) pdfUrl = String(match[1]);
-          }
-
-          if (pdfUrl) {
-            const pdfRes = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
-            const arrayBuffer = await pdfRes.arrayBuffer();
-            attachments.push({
-              filename: `auction-sheet-${chassis}.pdf`,
-              content: Buffer.from(arrayBuffer),
-              contentType: 'application/pdf'
-            });
+            const match = reportText.match(/href="([^"]+\.pdf)"/i);
+            if (match && match[1]) pdfUrl = String(match[1]);
           }
         }
+      }
+
+      // Attach the PDF file
+      if (pdfUrl) {
+        const pdfRes = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
+        const arrayBuffer = await pdfRes.arrayBuffer();
+        attachments.push({
+          filename: `auction-sheet-${chassis}.pdf`,
+          content: Buffer.from(arrayBuffer),
+          contentType: 'application/pdf'
+        });
       }
     } catch (err) {
       console.error('Failed to fetch/attach auction sheet info:', err);
     }
 
-    const fallbackDownloadUrl = downloadUrl || `https://carclickbd.com/auction-sheets?chassis=${chassis}`;
+    const fallbackDownloadUrl = pdfUrl || downloadUrl || `https://carclickbd.com/auction-sheets?status=success&chassis=${chassis}`;
 
     const customerHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">

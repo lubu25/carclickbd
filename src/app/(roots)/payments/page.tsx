@@ -41,16 +41,33 @@ function PaymentPageContent() {
       if (pendingData) {
         try {
           const parsedData = JSON.parse(pendingData);
+          const effectiveChassis = chassis || parsedData.chassis;
           if (parsedData.chassis === chassis || (!chassis && parsedData.chassis)) {
-            // Include download URL
-            parsedData.downloadUrl = window.location.origin + `/auction-sheets?status=success&payment_id=${paymentId}&chassis=${parsedData.chassis}`;
-            fetch('/api/auction-sheet/send-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(parsedData)
-            }).catch(e => console.error('Failed to send email:', e));
-            
             window.localStorage.removeItem('pendingAuctionOrder');
+
+            // Try to get the real PDF url from JPCenter to include in email
+            fetch(`/api/jpcenter/download?chassis=${effectiveChassis}`)
+              .then(res => res.json())
+              .then(json => {
+                const pdfUrl = json?.pdfUrl || json?.images?.[0] || null;
+                parsedData.downloadUrl = pdfUrl || (window.location.origin + `/auction-sheets?status=success&chassis=${effectiveChassis}`);
+                return fetch('/api/auction-sheet/send-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(parsedData),
+                  keepalive: true
+                });
+              })
+              .catch(() => {
+                // Fallback: send email without PDF url
+                parsedData.downloadUrl = window.location.origin + `/auction-sheets?status=success&chassis=${effectiveChassis}`;
+                fetch('/api/auction-sheet/send-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(parsedData),
+                  keepalive: true
+                }).catch(e => console.error('Failed to send email:', e));
+              });
           }
         } catch (e) {
           console.error('Failed to parse pending auction order data');
