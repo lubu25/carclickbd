@@ -468,7 +468,7 @@ const AuctionSheetsPageContent = () => {
                         {purchaseError}
                       </p>
                       <p className="mb-6 text-sm text-slate-600">
-                        Don't worry, we have received your payment. Please contact our support team on WhatsApp to get your report manually.
+                        Don&apos;t worry, we have received your payment. Please contact our support team on WhatsApp to get your report manually.
                       </p>
                       <Link
                         href={getWhatsAppUrl(`Hello, I paid for auction sheet verification (Chassis: ${chassis}) but received an error: ${purchaseError}`)}
