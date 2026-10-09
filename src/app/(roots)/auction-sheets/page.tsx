@@ -431,6 +431,28 @@ const AuctionSheetsPageContent = () => {
                         title="Auction Sheet PDF"
                       />
                     </div>
+                  ) : isPaymentPaid && purchaseError ? (
+                    <div className="mx-auto w-full max-w-2xl rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+                      <div className="mb-3 flex justify-center text-red-500">
+                        <AlertCircle size={48} />
+                      </div>
+                      <h2 className="mb-2 text-xl font-bold text-slate-800">Payment Successful, but Report Delayed</h2>
+                      <p className="mb-6 text-sm font-medium text-slate-600">
+                        {purchaseError}
+                      </p>
+                      <p className="mb-6 text-sm text-slate-600">
+                        Don't worry, we have received your payment. Please contact our support team on WhatsApp to get your report manually.
+                      </p>
+                      <Link
+                        href={getWhatsAppUrl(`Hello, I paid for auction sheet verification (Chassis: ${chassis}) but received an error: ${purchaseError}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 text-sm font-black text-white transition hover:bg-[#20bd5a]"
+                      >
+                        <MessageCircle size={18} />
+                        Contact Support
+                      </Link>
+                    </div>
                   ) : (
                     <>
                       <div className="space-y-1">

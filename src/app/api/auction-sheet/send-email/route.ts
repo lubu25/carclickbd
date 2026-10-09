@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     let pdfUrl: string | null = downloadUrl && downloadUrl.includes('.pdf') ? downloadUrl : null;
 
     try {
-      const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE || '3574926_42351f64ee17f62f8729d3d527c35dca';
+      const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE || process.env.NEXT_PUBLIC_JPCENTER_CODE || process.env.NEXT_PUBLIC_JPCENTER_API_CODE || '3574926_42351f64ee17f62f8729d3d527c35dca';
       if (apiCode && !pdfUrl) {
         // Only call JPCenter if we don't already have a PDF url
         const lookupUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}`;
