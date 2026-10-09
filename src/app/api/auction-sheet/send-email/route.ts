@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const customerHtml = `
       <h2>Payment Successful for Auction Sheet: ${chassis}</h2>
       <p>Dear ${name || 'Customer'},</p>
-      <p>Your payment of ${amount || 750} BDT has been successfully received.</p>
+      <p>Your payment of ${amount || 10} BDT has been successfully received.</p>
       <p>You can download your auction sheet using the link below:</p>
       <a href="${downloadUrl || 'https://carclickbd.com/auction-sheets?chassis=' + chassis}" style="padding: 10px 15px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Download Auction Sheet</a>
       <p style="margin-top: 20px;">If you face any issues, please contact CarClickBD support.</p>
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${mobileNumber || 'N/A'}</p>
       <p><strong>Chassis:</strong> ${chassis}</p>
-      <p><strong>Amount:</strong> ${amount || 750} BDT</p>
+      <p><strong>Amount:</strong> ${amount || 10} BDT</p>
     `;
 
     await transporter.sendMail({

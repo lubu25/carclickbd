@@ -7,12 +7,20 @@ export const auctionSheetApi = baseApi.injectEndpoints({
         try {
           const response = await fetch(`/api/jpcenter?chassis=${encodeURIComponent(chassis)}`);
           if (!response.ok) {
-            return { error: { status: response.status, data: await response.text() } };
+            const errorText = await response.text();
+            if (errorText.includes('support@ajes.com') || errorText.includes('allow_ip_ai')) {
+              return { error: { status: 'IP_BLOCKED', message: 'আপনার IP Address টি JPCenter থেকে ব্লক করা হয়েছে। দয়া করে support@ajes.com এ ইমেইল করে আপনার IP আনব্লক করুন, অথবা অন্য নেটওয়ার্ক বা সার্ভার ব্যবহার করুন।' } };
+            }
+            return { error: { status: response.status, data: errorText } };
           }
           const rawXmlText = await response.text();
           // Sanitize XML: replace unescaped '&' with '&amp;' to prevent DOMParser from failing
           const xmlText = rawXmlText.replace(/&(?!amp;|lt;|gt;|apos;|quot;)/g, '&amp;');
           
+          if (rawXmlText.includes('support@ajes.com') || rawXmlText.includes('allow_ip_ai')) {
+            return { error: { status: 'IP_BLOCKED', message: 'আপনার IP Address টি JPCenter থেকে ব্লক করা হয়েছে। দয়া করে support@ajes.com এ ইমেইল করে আপনার IP আনব্লক করুন, অথবা অন্য নেটওয়ার্ক বা সার্ভার ব্যবহার করুন।' } };
+          }
+
           if (typeof window !== "undefined" && window.DOMParser) {
             const parser = new window.DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");

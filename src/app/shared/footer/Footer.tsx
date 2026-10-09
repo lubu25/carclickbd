@@ -185,7 +185,9 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
               alt="Pay with Visa, Mastercard, American Express, DBBL Nexus, UnionPay, Rocket, bKash, OK, Tap, MeghnaPay, Nagad, mCash, Upay and CellFin. Verified by EPS Easy Payment System."
               width={2000}
               height={200}
-              className="h-auto w-full object-contain"
+              quality={100}
+              unoptimized
+              className="h-auto w-full max-w-[1000px] mx-auto object-contain"
             />
           </div>
           <p className="text-slate-500">
