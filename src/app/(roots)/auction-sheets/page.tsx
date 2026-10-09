@@ -169,6 +169,7 @@ const AuctionSheetsPageContent = () => {
   const [purchaseError, setPurchaseError] = useState('');
   const [frontendJpcenterData, setFrontendJpcenterData] = useState<any>(null);
   const [isFrontendDownloading, setIsFrontendDownloading] = useState(false);
+  const reportFetchStarted = useRef(false);
   const automaticDownloadStarted = useRef(false);
   const [getAuctionSheetReport, { data, error, isFetching }] =
     useLazyGetAuctionSheetReportQuery();
@@ -183,30 +184,55 @@ const AuctionSheetsPageContent = () => {
   const paymentStatus =
     paymentStatusResponse?.data?.data || paymentStatusResponse?.data;
   const isPaymentPaid = paymentStatus?.paid === true || statusParam === 'success';
-  const downloadUrl = frontendJpcenterData?.pdfUrl || paymentStatus?.download_url || (frontendJpcenterData?.images?.[0]);
+  const downloadUrl = frontendJpcenterData?.fileUrl || '';
 
   useEffect(() => {
-    if (statusParam === 'success' && chassis && !frontendJpcenterData && !isFrontendDownloading) {
+    if (
+      statusParam === 'success' &&
+      chassis &&
+      !frontendJpcenterData &&
+      !isFrontendDownloading &&
+      !reportFetchStarted.current
+    ) {
+      reportFetchStarted.current = true;
       setIsFrontendDownloading(true);
       setPurchaseError('');
-      fetch(`/api/jpcenter/download?chassis=${chassis}`)
-        .then(res => res.json())
-        .then(json => {
-          setIsFrontendDownloading(false);
-          if (json.success && (json.pdfUrl || json.images?.length)) {
-            setFrontendJpcenterData(json);
-          } else {
-            setPurchaseError(json.error || 'Could not retrieve the auction sheet. Please contact CarClickBD.');
+      fetch(`/api/jpcenter/download?chassis=${encodeURIComponent(chassis)}`)
+        .then(async response => {
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(
+              result.error || 'Could not retrieve the auction sheet. Please contact CarClickBD.',
+            );
           }
-        })
-        .catch(() => {
+          const blob = await response.blob();
+          const contentDisposition = response.headers.get('content-disposition') || '';
+          const filename =
+            contentDisposition.match(/filename="([^"]+)"/i)?.[1] ||
+            `auction-sheet-${chassis}.pdf`;
+          const fileUrl = URL.createObjectURL(blob);
           setIsFrontendDownloading(false);
-          setPurchaseError('Connection error. Please contact CarClickBD.');
+          setFrontendJpcenterData({ fileUrl, filename });
+        })
+        .catch(error => {
+          setIsFrontendDownloading(false);
+          setPurchaseError(
+            error instanceof Error
+              ? error.message
+              : 'Connection error. Please contact CarClickBD.',
+          );
         });
     }
-  }, [statusParam, chassis]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusParam, chassis, frontendJpcenterData, isFrontendDownloading]);
 
-  // Auto-download the PDF as soon as it's available after payment
+  useEffect(() => {
+    const fileUrl = frontendJpcenterData?.fileUrl;
+    return () => {
+      if (fileUrl) URL.revokeObjectURL(fileUrl);
+    };
+  }, [frontendJpcenterData?.fileUrl]);
+
+  // Auto-download the report after the server has returned the actual file.
   useEffect(() => {
     if (
       statusParam !== 'success' ||
@@ -218,12 +244,12 @@ const AuctionSheetsPageContent = () => {
     automaticDownloadStarted.current = true;
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = `auction-sheet-${chassis || 'report'}.pdf`;
+    a.download = frontendJpcenterData?.filename || `auction-sheet-${chassis || 'report'}.pdf`;
     a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     a.remove();
-  }, [downloadUrl, statusParam, chassis]);
+  }, [downloadUrl, frontendJpcenterData, statusParam, chassis]);
 
   useEffect(() => {
     const cleanChassis = chassis.trim();
@@ -418,12 +444,13 @@ const AuctionSheetsPageContent = () => {
                     <div className="mx-auto w-full max-w-4xl border-2 border-[#4A90E2] bg-white p-2 sm:p-4">
                       <div className="mb-4 flex flex-col items-center justify-between gap-4 sm:flex-row">
                         <h2 className="text-lg font-bold text-slate-800 md:text-xl">Your Verified Auction Sheet</h2>
-                        <button
-                          onClick={() => window.open(downloadUrl, '_blank')}
+                        <a
+                          href={downloadUrl}
+                          download={frontendJpcenterData?.filename}
                           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-6 text-sm font-black text-slate-950 transition hover:bg-[#e4ad00]"
                         >
-                          Download PDF
-                        </button>
+                          Download Report
+                        </a>
                       </div>
                       <iframe
                         src={`${downloadUrl}#toolbar=0`}

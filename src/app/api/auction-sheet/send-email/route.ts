@@ -1,32 +1,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-type ReportValue = string | number | boolean | null | undefined;
-
-const getNestedValue = (source: any, keys: string[]): ReportValue => {
-  if (!source || typeof source !== 'object') return undefined;
-  for (const key of keys) {
-    const value = source[key];
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return value;
-    }
-  }
-  for (const value of Object.values(source)) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      const nestedValue = getNestedValue(value, keys);
-      if (nestedValue !== undefined && nestedValue !== null && nestedValue !== '') {
-        return nestedValue;
-      }
-    }
-  }
-  return undefined;
-};
-
-const getNestedImage = (source: any): string => {
-  const image = getNestedValue(source, ['image', 'image_url', 'imageUrl', 'photo', 'photo_url', 'sheet_image', 'sheetImage', 'auction_sheet', 'auctionSheet']);
-  return typeof image === 'string' && /^https?:\/\//i.test(image) ? image : '';
-};
-
 export async function POST(request: Request) {
   try {
     const { email, name, chassis, amount, mobileNumber, downloadUrl } = await request.json();
@@ -51,62 +25,9 @@ export async function POST(request: Request) {
       },
     });
 
-    const attachments: any[] = [];
-    let vehicleModel = 'N/A';
-    let vehicleYear = 'N/A';
-    let vehicleColor = 'N/A';
-    let vehicleGrade = 'N/A';
-    let imageUrl = '';
-    let pdfUrl: string | null = downloadUrl && downloadUrl.includes('.pdf') ? downloadUrl : null;
-
-    try {
-      const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE || process.env.NEXT_PUBLIC_JPCENTER_CODE || process.env.NEXT_PUBLIC_JPCENTER_API_CODE || '3574926_42351f64ee17f62f8729d3d527c35dca';
-      if (apiCode && !pdfUrl) {
-        // Only call JPCenter if we don't already have a PDF url
-        const lookupUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}`;
-        const lookupRes = await fetch(lookupUrl, { signal: AbortSignal.timeout(15000) });
-        const lookupJson = await lookupRes.json();
-        const records = Array.isArray(lookupJson?.aj) ? lookupJson.aj.filter((r: any) => r && typeof r === 'object') : [];
-        const record = records.find((item: any) => String(item.key || '').trim());
-
-        if (record?.key) {
-          const reportUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}&key=${record.key}`;
-          const reportRes = await fetch(reportUrl, { signal: AbortSignal.timeout(15000) });
-          const reportText = await reportRes.text();
-
-          try {
-            const reportJson = JSON.parse(reportText);
-            const source = Array.isArray(reportJson) ? reportJson[0] : reportJson;
-            const possiblePdf = Object.values(source).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
-            if (possiblePdf) pdfUrl = String(possiblePdf);
-
-            vehicleModel = String(getNestedValue(source, ['model', 'car_model', 'carModel', 'name']) || 'N/A');
-            vehicleYear = String(getNestedValue(source, ['year', 'car_year', 'production_year', 'productionYear', 'model_year']) || 'N/A');
-            vehicleColor = String(getNestedValue(source, ['car_color', 'color', 'colour']) || 'N/A');
-            vehicleGrade = String(getNestedValue(source, ['grade', 'auction_grade', 'auctionGrade', 'car_grade']) || 'N/A');
-            imageUrl = getNestedImage(source);
-          } catch (e) {
-            const match = reportText.match(/href="([^"]+\.pdf)"/i);
-            if (match && match[1]) pdfUrl = String(match[1]);
-          }
-        }
-      }
-
-      // Attach the PDF file
-      if (pdfUrl) {
-        const pdfRes = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
-        const arrayBuffer = await pdfRes.arrayBuffer();
-        attachments.push({
-          filename: `auction-sheet-${chassis}.pdf`,
-          content: Buffer.from(arrayBuffer),
-          contentType: 'application/pdf'
-        });
-      }
-    } catch (err) {
-      console.error('Failed to fetch/attach auction sheet info:', err);
-    }
-
-    const fallbackDownloadUrl = pdfUrl || downloadUrl || `https://carclickbd.com/auction-sheets?status=success&chassis=${chassis}`;
+    const fallbackDownloadUrl =
+      downloadUrl ||
+      `https://carclickbd.com/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
 
     const customerHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
@@ -123,23 +44,12 @@ export async function POST(request: Request) {
             <h3 style="margin-top: 0; color: #003399;">Vehicle Details</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <tr><td style="padding: 5px 0; font-weight: bold; width: 120px;">Chassis No:</td><td>${chassis}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Model:</td><td style="text-transform: uppercase;">${vehicleModel}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Year:</td><td style="text-transform: uppercase;">${vehicleYear}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Color:</td><td style="text-transform: uppercase;">${vehicleColor}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Grade:</td><td style="text-transform: uppercase;">${vehicleGrade}</td></tr>
             </table>
           </div>
 
-          ${imageUrl ? `
-            <div style="text-align: center; margin: 25px 0;">
-              <h3 style="color: #333; margin-bottom: 10px;">Auction Sheet Image</h3>
-              <img src="${imageUrl}" alt="Auction Sheet for ${chassis}" style="max-width: 100%; border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
-            </div>
-          ` : ''}
-
           <div style="text-align: center; margin-top: 30px;">
-            <p>You can also download your auction sheet in PDF format below:</p>
-            <a href="${fallbackDownloadUrl}" style="background-color: #f5bd05; color: #000; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; display: inline-block;">Download PDF Report</a>
+            <p>Open your auction sheet report below:</p>
+            <a href="${fallbackDownloadUrl}" style="background-color: #f5bd05; color: #000; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; display: inline-block;">Open Report</a>
           </div>
           
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
@@ -157,7 +67,6 @@ export async function POST(request: Request) {
       to: email,
       subject: 'CarClickBD Auction Sheet Delivery - ' + chassis,
       html: customerHtml,
-      attachments: attachments.length > 0 ? attachments : undefined
     });
 
     const adminHtml = `
@@ -182,4 +91,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
-
