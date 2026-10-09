@@ -1,6 +1,32 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+type ReportValue = string | number | boolean | null | undefined;
+
+const getNestedValue = (source: any, keys: string[]): ReportValue => {
+  if (!source || typeof source !== 'object') return undefined;
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return value;
+    }
+  }
+  for (const value of Object.values(source)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const nestedValue = getNestedValue(value, keys);
+      if (nestedValue !== undefined && nestedValue !== null && nestedValue !== '') {
+        return nestedValue;
+      }
+    }
+  }
+  return undefined;
+};
+
+const getNestedImage = (source: any): string => {
+  const image = getNestedValue(source, ['image', 'image_url', 'imageUrl', 'photo', 'photo_url', 'sheet_image', 'sheetImage', 'auction_sheet', 'auctionSheet']);
+  return typeof image === 'string' && /^https?:\/\//i.test(image) ? image : '';
+};
+
 export async function POST(request: Request) {
   try {
     const { email, name, chassis, amount, mobileNumber, downloadUrl } = await request.json();
@@ -18,24 +44,21 @@ export async function POST(request: Request) {
     }
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // You can change this or use host/port if using Hostinger SMTP
+      service: 'gmail',
       auth: {
         user: smtpEmail,
         pass: smtpPassword,
       },
     });
 
-    const customerHtml = `
-      <h2>Payment Successful for Auction Sheet: ${chassis}</h2>
-      <p>Dear ${name || 'Customer'},</p>
-      <p>Your payment of ${amount || 10} BDT has been successfully received.</p>
-      <p>You can download your auction sheet using the link below:</p>
-      <a href="${downloadUrl || 'https://carclickbd.com/auction-sheets?chassis=' + chassis}" style="padding: 10px 15px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Download Auction Sheet</a>
-      <p style="margin-top: 20px;">If you face any issues, please contact CarClickBD support.</p>
-    `;
-
-    // Fetch PDF to attach
     const attachments: any[] = [];
+    let vehicleModel = 'N/A';
+    let vehicleYear = 'N/A';
+    let vehicleColor = 'N/A';
+    let vehicleGrade = 'N/A';
+    let imageUrl = '';
+    let pdfUrl: string | null = null;
+
     try {
       const apiCode = process.env.JPCENTER_API_CODE || process.env.JPCENTER_API_KEY || process.env.JPCENTER_CODE;
       if (apiCode) {
@@ -49,12 +72,18 @@ export async function POST(request: Request) {
           const reportUrl = `https://jpcenter.ru/api/report?json=&code=${apiCode}&chassis=${chassis}&key=${record.key}`;
           const reportRes = await fetch(reportUrl, { signal: AbortSignal.timeout(15000) });
           const reportText = await reportRes.text();
-          let pdfUrl: string | null = null;
           
           try {
             const reportJson = JSON.parse(reportText);
             const possiblePdf = Object.values(reportJson).find((val: any) => typeof val === 'string' && val.includes('.pdf'));
             if (possiblePdf) pdfUrl = String(possiblePdf);
+
+            const source = Array.isArray(reportJson) ? reportJson[0] : reportJson;
+            vehicleModel = String(getNestedValue(source, ['model', 'car_model', 'carModel', 'name']) || 'N/A');
+            vehicleYear = String(getNestedValue(source, ['year', 'car_year', 'production_year', 'productionYear', 'model_year']) || 'N/A');
+            vehicleColor = String(getNestedValue(source, ['car_color', 'color', 'colour']) || 'N/A');
+            vehicleGrade = String(getNestedValue(source, ['grade', 'auction_grade', 'auctionGrade', 'car_grade']) || 'N/A');
+            imageUrl = getNestedImage(source);
           } catch (e) {
              const match = reportText.match(/href="([^"]+\.pdf)"/i);
              if (match && match[1]) pdfUrl = String(match[1]);
@@ -72,10 +101,55 @@ export async function POST(request: Request) {
         }
       }
     } catch (err) {
-      console.error('Failed to attach PDF to email:', err);
+      console.error('Failed to fetch/attach auction sheet info:', err);
     }
 
-    // Send to customer
+    const fallbackDownloadUrl = downloadUrl || `https://carclickbd.com/auction-sheets?chassis=${chassis}`;
+
+    const customerHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+        <div style="background-color: #003399; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #fff; margin: 0; font-size: 24px;">CarClickBD</h1>
+          <p style="color: #f5bd05; margin: 5px 0 0 0; font-weight: bold;">Verified Auction Sheet Report</p>
+        </div>
+        
+        <div style="padding: 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px;">
+          <p style="font-size: 16px;">Dear <strong>${name || 'Customer'}</strong>,</p>
+          <p>Thank you for choosing CarClickBD. Your payment of <strong>${amount || 10} BDT</strong> for the Japanese auction sheet verification has been successfully processed.</p>
+          
+          <div style="background-color: #f8fafc; border-left: 4px solid #f5bd05; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #003399;">Vehicle Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 5px 0; font-weight: bold; width: 120px;">Chassis No:</td><td>${chassis}</td></tr>
+              <tr><td style="padding: 5px 0; font-weight: bold;">Model:</td><td style="text-transform: uppercase;">${vehicleModel}</td></tr>
+              <tr><td style="padding: 5px 0; font-weight: bold;">Year:</td><td style="text-transform: uppercase;">${vehicleYear}</td></tr>
+              <tr><td style="padding: 5px 0; font-weight: bold;">Color:</td><td style="text-transform: uppercase;">${vehicleColor}</td></tr>
+              <tr><td style="padding: 5px 0; font-weight: bold;">Grade:</td><td style="text-transform: uppercase;">${vehicleGrade}</td></tr>
+            </table>
+          </div>
+
+          ${imageUrl ? `
+            <div style="text-align: center; margin: 25px 0;">
+              <h3 style="color: #333; margin-bottom: 10px;">Auction Sheet Image</h3>
+              <img src="${imageUrl}" alt="Auction Sheet for ${chassis}" style="max-width: 100%; border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+            </div>
+          ` : ''}
+
+          <div style="text-align: center; margin-top: 30px;">
+            <p>You can also download your auction sheet in PDF format below:</p>
+            <a href="${fallbackDownloadUrl}" style="background-color: #f5bd05; color: #000; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; display: inline-block;">Download PDF Report</a>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          
+          <p style="font-size: 13px; color: #666; text-align: center;">
+            If you need further assistance with translation or understanding the condition notes, please contact our support via WhatsApp.<br><br>
+            <strong>CarClickBD Team</strong>
+          </p>
+        </div>
+      </div>
+    `;
+
     await transporter.sendMail({
       from: smtpEmail,
       to: email,
@@ -84,7 +158,6 @@ export async function POST(request: Request) {
       attachments: attachments.length > 0 ? attachments : undefined
     });
 
-    // Send to admin
     const adminHtml = `
       <h2>New Auction Sheet Order Paid</h2>
       <p><strong>Customer:</strong> ${name || 'N/A'}</p>
@@ -96,7 +169,7 @@ export async function POST(request: Request) {
 
     await transporter.sendMail({
       from: smtpEmail,
-      to: smtpEmail, // Send to admin email (same as sender)
+      to: smtpEmail,
       subject: 'New Auction Sheet Payment - ' + chassis,
       html: adminHtml,
     });
@@ -107,3 +180,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
