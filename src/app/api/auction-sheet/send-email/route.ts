@@ -18,7 +18,9 @@ export async function POST(request: Request) {
     }
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true for 465 (SSL)
       auth: {
         user: smtpEmail,
         pass: smtpPassword,
@@ -78,9 +80,11 @@ export async function POST(request: Request) {
       <p><strong>Amount:</strong> ${amount || 10} BDT</p>
     `;
 
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || smtpEmail;
+
     await transporter.sendMail({
       from: smtpEmail,
-      to: smtpEmail,
+      to: adminEmail,
       subject: 'New Auction Sheet Payment - ' + chassis,
       html: adminHtml,
     });
