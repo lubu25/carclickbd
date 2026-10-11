@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { Spin } from 'antd';
+import TrueReportViewer from '@/components/auction-sheet/TrueReportViewer';
 import {
   useCreateAuctionSheetOrderMutation,
   useLazyGetAuctionSheetReportQuery,
@@ -200,6 +201,8 @@ const AuctionSheetsPageContent = () => {
     }
   };
   const [isFrontendDownloading, setIsFrontendDownloading] = useState(false);
+  const [fullReportData, setFullReportData] = useState<any>(null);
+  const [isLoadingFullReport, setIsLoadingFullReport] = useState(false);
   const reportFetchStarted = useRef(false);
   const automaticDownloadStarted = useRef(false);
   const [getAuctionSheetReport, { data, error, isFetching }] =
@@ -217,51 +220,66 @@ const AuctionSheetsPageContent = () => {
   const isPaymentPaid = paymentStatus?.paid === true || statusParam === 'success';
   const downloadUrl = frontendJpcenterData?.fileUrl || '';
 
+  // Fetch complete True Report (all auction runs + car photos) when payment is confirmed
   useEffect(() => {
     if (
-      statusParam === 'success' &&
+      (statusParam === 'success' || isPaymentPaid) &&
       chassis &&
-      !frontendJpcenterData &&
-      !isFrontendDownloading &&
+      !fullReportData &&
+      !isLoadingFullReport &&
       !reportFetchStarted.current
     ) {
       reportFetchStarted.current = true;
-      setIsFrontendDownloading(true);
+      setIsLoadingFullReport(true);
       setPurchaseError('');
-      fetch(`/api/jpcenter/download?chassis=${encodeURIComponent(chassis)}`)
-        .then(async response => {
+
+      fetch(`/api/jpcenter?chassis=${encodeURIComponent(chassis)}&full=true`)
+        .then(async (response) => {
           if (!response.ok) {
-            const result = await response.json().catch(() => ({}));
-            throw new Error(
-              result.error || 'Could not retrieve the auction sheet. Please contact CarClickBD.',
-            );
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Could not retrieve full report data');
           }
-          const blob = await response.blob();
-          const contentDisposition = response.headers.get('content-disposition') || '';
-          const filename =
-            contentDisposition.match(/filename="([^"]+)"/i)?.[1] ||
-            `auction-sheet-${chassis}.pdf`;
-          const fileUrl = URL.createObjectURL(blob);
-          setIsFrontendDownloading(false);
-          setFrontendJpcenterData({ fileUrl, filename });
+          const resJson = await response.json();
+          if (resJson.success && resJson.data) {
+            setFullReportData(resJson.data);
+            
+            // Check and trigger email confirmation if pending
+            if (typeof window !== 'undefined') {
+              const pendingOrderStr = window.localStorage.getItem('pendingAuctionOrder');
+              if (pendingOrderStr) {
+                try {
+                  const pendingOrder = JSON.parse(pendingOrderStr);
+                  if (pendingOrder.chassis === chassis || !pendingOrder.chassis) {
+                    window.localStorage.removeItem('pendingAuctionOrder');
+                    pendingOrder.downloadUrl =
+                      window.location.origin +
+                      `/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
+                    fetch('/api/auction-sheet/send-email', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(pendingOrder),
+                      keepalive: true,
+                    }).catch((e) => console.error('Email dispatch error:', e));
+                  }
+                } catch (e) {
+                  console.error('Failed to parse pending order:', e);
+                }
+              }
+            }
+          } else {
+            throw new Error('Report data unavailable');
+          }
+          setIsLoadingFullReport(false);
         })
-        .catch(error => {
-          setIsFrontendDownloading(false);
+        .catch((err) => {
+          console.error('Failed to fetch full report:', err);
+          setIsLoadingFullReport(false);
           setPurchaseError(
-            error instanceof Error
-              ? error.message
-              : 'Connection error. Please contact CarClickBD.',
+            err instanceof Error ? err.message : 'Could not fetch full true report'
           );
         });
     }
-  }, [statusParam, chassis, frontendJpcenterData, isFrontendDownloading]);
-
-  useEffect(() => {
-    const fileUrl = frontendJpcenterData?.fileUrl;
-    return () => {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
-    };
-  }, [frontendJpcenterData?.fileUrl]);
+  }, [statusParam, isPaymentPaid, chassis, fullReportData, isLoadingFullReport]);
 
   // Auto-download the report after the server has returned the actual file.
   useEffect(() => {
@@ -304,12 +322,22 @@ const AuctionSheetsPageContent = () => {
   const reportSource = Array.isArray(report) ? report[0] : report;
   const reportRows = buildReportRows(report);
   const found = Boolean(reportData?.found);
+  const exactMatches: any[] = reportData?.exactMatches || (Array.isArray(report) ? report : []);
+  const allMatches: any[] = reportData?.allMatches || [];
+  const matchCount: number = reportData?.matchCount || exactMatches.length || (found ? 1 : 0);
+
   const model = getNestedValue(reportSource, [
     'model',
     'car_model',
     'carModel',
     'name',
   ]);
+  const brand = getNestedValue(reportSource, [
+    'brand',
+    'maker',
+    'car_maker',
+    'vendor',
+  ]) || 'TOYOTA';
   const year = getNestedValue(reportSource, [
     'year',
     'car_year',
@@ -323,6 +351,29 @@ const AuctionSheetsPageContent = () => {
     'auction_grade',
     'auctionGrade',
     'car_grade',
+  ]);
+  const displacement = getNestedValue(reportSource, [
+    'displacement',
+    'engineCc',
+    'car_displacement',
+  ]);
+  const transmission = getNestedValue(reportSource, [
+    'transmission',
+    'car_transmission',
+  ]);
+  const options = getNestedValue(reportSource, [
+    'options',
+    'equipment',
+    'car_options',
+  ]);
+  const startPrice = getNestedValue(reportSource, [
+    'startPrice',
+    'car_start_price',
+  ]);
+  const statusResult = getNestedValue(reportSource, [
+    'result',
+    'status',
+    'car_result',
   ]);
   const sheetImage = getNestedImage(reportSource);
   const downloadAvailable = true; // Bypassed for testing (reportData?.download_available === true)
@@ -473,29 +524,21 @@ const AuctionSheetsPageContent = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                <div className="space-y-4 text-center">
-                  {isPaymentPaid && isFrontendDownloading ? (
-                    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 border-2 border-[#4A90E2] bg-white p-12">
+                <div className="space-y-4">
+                  {isPaymentPaid && isLoadingFullReport ? (
+                    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 rounded-3xl border-2 border-[#4A90E2] bg-white p-12 text-center shadow-lg">
                       <Spin size="large" />
-                      <p className="text-base font-bold text-slate-700">Fetching your auction sheet report…</p>
-                      <p className="text-sm font-medium text-slate-500">This may take a few seconds. Please wait.</p>
+                      <p className="text-xl font-black text-slate-800">Loading Verified True Report & Car Photos…</p>
+                      <p className="text-sm font-semibold text-slate-500">
+                        Retrieving official Japanese auction sheet, vehicle inspection photos, and condition details for Chassis {chassis}
+                      </p>
                     </div>
-                  ) : isPaymentPaid && downloadUrl ? (
-                    <div className="mx-auto w-full max-w-4xl border-2 border-[#4A90E2] bg-white p-2 sm:p-4">
-                      <div className="mb-4 flex flex-col items-center justify-between gap-4 sm:flex-row">
-                        <h2 className="text-lg font-bold text-slate-800 md:text-xl">Your Verified Auction Sheet</h2>
-                        <a
-                          href={downloadUrl}
-                          download={frontendJpcenterData?.filename}
-                          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-6 text-sm font-black text-slate-950 transition hover:bg-[#e4ad00]"
-                        >
-                          Download Report
-                        </a>
-                      </div>
-                      <iframe
-                        src={`${downloadUrl}#toolbar=0`}
-                        className="h-[600px] w-full border border-slate-200 md:h-[800px]"
-                        title="Auction Sheet PDF"
+                  ) : isPaymentPaid && fullReportData?.reports && fullReportData.reports.length > 0 ? (
+                    <div className="w-full">
+                      <TrueReportViewer
+                        chassis={chassis}
+                        reports={fullReportData.reports}
+                        keyForTranslate={fullReportData.keyForTranslate}
                       />
                     </div>
                   ) : isPaymentPaid && purchaseError ? (
@@ -522,74 +565,146 @@ const AuctionSheetsPageContent = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-1">
+                      <div className="text-center space-y-1">
                         <p className="text-sm font-bold text-[#e50914]">
-                          Click on the chassis image to get the true report
+                          Click on the chassis image or unlock button to get the complete True Report
                         </p>
                         <p className="text-sm font-bold text-black">
-                          অকশন শীট ভ্যারিফাই করতে নিচের ছবিতে ক্লিক করুন ।
+                          সম্পূর্ণ অকশন শীট ও গাড়ির ছবিসহ ট্রু রিপোর্ট পেতে নিচের ছবিতে ক্লিক করুন।
                         </p>
                       </div>
 
-                      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 border-2 border-[#4A90E2] p-6 sm:flex-row sm:items-start sm:p-8">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          aria-label="Download auction sheet"
-                          onClick={handleDownloadOrPurchase}
-                          className="relative flex h-[120px] w-full max-w-[260px] shrink-0 cursor-pointer items-center justify-center bg-white transition hover:opacity-80"
-                        >
-                          {sheetImage ? (
-                            <Image
-                              src={sheetImage}
-                              alt={`Auction sheet preview for ${chassis}`}
-                              fill
-                              className="object-contain"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center border border-gray-300 p-4 text-center text-xs font-bold text-slate-500">
-                              Image preview
-                            </div>
-                          )}
+                      {/* Verified Vehicle Match Card */}
+                      <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border-2 border-[#4A90E2] bg-white shadow-lg">
+                        {/* Match Status Banner */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#003399] px-6 py-3 text-white">
+                          <div className="flex items-center gap-2">
+                            <BadgeCheck className="text-emerald-400" size={20} />
+                            <span className="text-xs font-black uppercase tracking-wider">
+                              Verified in Japanese Auction Database
+                            </span>
+                          </div>
+                          <span className="rounded-full bg-white/20 px-3 py-0.5 text-xs font-bold">
+                            {matchCount} Record{matchCount > 1 ? 's' : ''} Found
+                          </span>
                         </div>
 
-                        <div className="flex w-full flex-col space-y-4 text-left sm:w-auto">
-                          <p className="text-xl font-bold text-black md:text-2xl">
-                            Model:{' '}
-                            <span className="uppercase text-[#e50914]">
-                              {isFetching ? 'Checking...' : (model || 'N/A')}
-                            </span>
-                          </p>
-                          <p className="text-xl font-bold text-black md:text-2xl">
-                            Year:{' '}
-                            <span className="uppercase text-[#e50914]">
-                              {isFetching ? 'Checking...' : (year || 'N/A')}
-                            </span>
-                          </p>
-                          <p className="text-xl font-bold text-black md:text-2xl">
-                            Color:{' '}
-                            <span className="uppercase text-[#e50914]">
-                              {isFetching ? 'Checking...' : (color || 'N/A')}
-                            </span>
-                          </p>
+                        <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
+                          {/* Left: Preview Sheet Thumbnail */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Unlock auction sheet"
+                            onClick={handleDownloadOrPurchase}
+                            className="group relative flex h-[200px] w-full max-w-[280px] shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition hover:border-[#003399] hover:shadow-md"
+                          >
+                            {sheetImage ? (
+                              <>
+                                <Image
+                                  src={sheetImage}
+                                  alt={`Auction sheet preview for ${chassis}`}
+                                  fill
+                                  className="object-contain p-2 transition group-hover:scale-105"
+                                  unoptimized
+                                />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-center text-white opacity-0 transition group-hover:opacity-100">
+                                  <ShieldCheck size={32} className="text-[#f5bd05]" />
+                                  <span className="mt-1 text-xs font-black">Click to Unlock Full Report</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center gap-2 p-4 text-center text-xs font-bold text-slate-500">
+                                <FileSearch size={32} className="text-[#003399]" />
+                                <span>Auction Record Verified</span>
+                              </div>
+                            )}
+                            <div className="absolute bottom-2 left-2 right-2 rounded-md bg-black/75 px-2 py-1 text-center text-[10px] font-bold text-white backdrop-blur-sm">
+                              🔒 High-Res Sheet & Photos Protected
+                            </div>
+                          </div>
+
+                          {/* Right: Specifications & Details */}
+                          <div className="flex w-full flex-col space-y-3 text-left">
+                            <div>
+                              <p className="text-xs font-black uppercase tracking-wider text-[#003399]">
+                                {isFetching ? 'Checking...' : (brand || 'TOYOTA')}
+                              </p>
+                              <h3 className="text-2xl font-black text-slate-950 sm:text-3xl">
+                                {isFetching ? 'Checking...' : (model || 'Verified Vehicle')}
+                              </h3>
+                              <p className="text-xs font-bold text-slate-500">
+                                Chassis: <span className="font-extrabold text-slate-800">{chassis}</span>
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 text-xs sm:grid-cols-3">
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Year</span>
+                                <span className="font-black text-slate-900">{isFetching ? '...' : (year || 'N/A')}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Grade</span>
+                                <span className="font-black text-slate-900">{isFetching ? '...' : (grade || 'N/A')}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Engine</span>
+                                <span className="font-black text-slate-900">{isFetching ? '...' : (displacement ? `${displacement} cc` : 'N/A')}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Transmission</span>
+                                <span className="font-black text-slate-900">{isFetching ? '...' : (transmission || 'N/A')}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Color</span>
+                                <span className="font-black text-slate-900">{isFetching ? '...' : (color || 'N/A')}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-bold block uppercase text-[10px]">Result</span>
+                                <span className={`font-black uppercase ${String(statusResult).toLowerCase() === 'sold' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                  {isFetching ? '...' : (statusResult || 'Verified')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Auction History Timeline if multiple records */}
+                            {exactMatches.length > 1 && (
+                              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-2.5">
+                                <p className="text-[11px] font-bold text-[#003399]">
+                                  {exactMatches.length} Recorded Auction Runs:
+                                </p>
+                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                  {exactMatches.map((m, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 shadow-xs"
+                                    >
+                                      Run {idx + 1}: {m.year || ''} {m.grade || ''} ({m.result || m.status || 'Verified'})
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Prominent Checkout Action */}
+                      <div className="flex flex-col items-center justify-center pt-2">
+                        <button
+                          type="button"
+                          onClick={handleDownloadOrPurchase}
+                          className="inline-flex h-14 w-full max-w-md items-center justify-center gap-3 rounded-2xl bg-[#e50914] px-8 text-base font-black uppercase text-white shadow-[0_16px_36px_rgba(229,9,20,0.3)] transition hover:-translate-y-0.5 hover:bg-[#c20811] sm:w-auto"
+                        >
+                          <ShieldCheck size={20} />
+                          Unlock Full True Report with Car Photos &bull; ৳{AUCTION_SHEET_PRICE}
+                          <ArrowRight size={18} />
+                        </button>
+                        <p className="mt-3 text-xs font-semibold text-slate-500">
+                          Instant access to high-res Japanese auction sheets, multiple car inspection photos, translation, and marks explanation.
+                        </p>
                       </div>
                     </>
                   )}
-                </div>
-
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleDownloadOrPurchase}
-                    className="inline-flex h-12 w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-[#f5bd05] px-5 text-sm font-black text-slate-950 shadow-[0_14px_30px_rgba(245,189,5,0.25)] transition hover:-translate-y-0.5 hover:bg-[#e4ad00] sm:w-auto"
-                  >
-                    {downloadAvailable
-                      ? 'Download Auction Sheet'
-                      : 'Auction Sheet Pending'}
-                    <ArrowRight size={17} />
-                  </button>
                 </div>
               </div>
             )}

@@ -17,10 +17,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Email configuration missing' }, { status: 500 });
     }
 
+    const smtpHost =
+      process.env.SMTP_HOST ||
+      (smtpEmail.includes('gmail.com') ? 'smtp.gmail.com' : 'smtp.hostinger.com');
+    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+    const isSecure = smtpPort === 465;
+
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true for 465 (SSL)
+      host: smtpHost,
+      port: smtpPort,
+      secure: isSecure, // true for 465 (SSL)
       auth: {
         user: smtpEmail,
         pass: smtpPassword,
@@ -65,9 +71,9 @@ export async function POST(request: Request) {
     `;
 
     await transporter.sendMail({
-      from: smtpEmail,
+      from: `"CarClickBD" <${smtpEmail}>`,
       to: email,
-      subject: 'CarClickBD Auction Sheet Delivery - ' + chassis,
+      subject: `CarClickBD Verified True Report Delivery - ${chassis}`,
       html: customerHtml,
     });
 
@@ -77,15 +83,15 @@ export async function POST(request: Request) {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${mobileNumber || 'N/A'}</p>
       <p><strong>Chassis:</strong> ${chassis}</p>
-      <p><strong>Amount:</strong> ${amount || 10} BDT</p>
+      <p><strong>Amount:</strong> ${amount || 750} BDT</p>
     `;
 
     const adminEmail = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || smtpEmail;
 
     await transporter.sendMail({
-      from: smtpEmail,
+      from: `"CarClickBD Orders" <${smtpEmail}>`,
       to: adminEmail,
-      subject: 'New Auction Sheet Payment - ' + chassis,
+      subject: `[Order Alert] New Auction Sheet Paid - ${chassis}`,
       html: adminHtml,
     });
 

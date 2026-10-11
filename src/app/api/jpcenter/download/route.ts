@@ -138,15 +138,34 @@ export async function GET(request: Request) {
       process.env.NEXT_PUBLIC_JPCENTER_API_CODE ||
       "3574926_42351f64ee17f62f8729d3d527c35dca";
     const baseUrl =
-      process.env.JPCENTER_API_BASE_URL || "https://jpcenter.ru/api/report";
+      process.env.JPCENTER_API_BASE_URL || "https://au.avto.jp/api/report";
     const lookupUrl = new URL(baseUrl);
     lookupUrl.searchParams.set("json", "");
     lookupUrl.searchParams.set("code", apiCode);
     lookupUrl.searchParams.set("chassis", cleanChassis);
 
-    const lookupResponse = await fetch(lookupUrl, {
+    let lookupResponse = await fetch(lookupUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      },
       signal: AbortSignal.timeout(30000),
     });
+
+    if (!lookupResponse.ok) {
+      // Fallback to ajes.com
+      const fallbackUrl = new URL("https://ajes.com/api/report");
+      fallbackUrl.searchParams.set("json", "");
+      fallbackUrl.searchParams.set("code", apiCode);
+      fallbackUrl.searchParams.set("chassis", cleanChassis);
+      lookupResponse = await fetch(fallbackUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        },
+        signal: AbortSignal.timeout(30000),
+      }).catch(() => lookupResponse);
+    }
     let lookupJson: any;
     try {
       lookupJson = await lookupResponse.json();
