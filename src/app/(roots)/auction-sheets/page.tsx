@@ -220,9 +220,11 @@ const AuctionSheetsPageContent = () => {
       const pendingOrder = JSON.parse(pendingOrderStr);
       if (pendingOrder.chassis !== chassis && pendingOrder.chassis) return;
       window.localStorage.removeItem('pendingAuctionOrder');
+      const currentKey = pendingOrder.key || reportData?.firstKey || reportSource?.key || searchParams.get('key') || '';
+      if (currentKey) pendingOrder.key = currentKey;
       pendingOrder.downloadUrl =
         window.location.origin +
-        `/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
+        `/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}${currentKey ? `&key=${encodeURIComponent(currentKey)}` : ''}`;
       fetch('/api/auction-sheet/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -335,8 +337,10 @@ const AuctionSheetsPageContent = () => {
 
       // Save data to localStorage to send email from frontend after success
       if (typeof window !== 'undefined') {
+        const reportKey = reportData?.firstKey || reportSource?.key || searchParams.get('key') || '';
         window.localStorage.setItem('pendingAuctionOrder', JSON.stringify({
           chassis: cleanChassis,
+          key: reportKey,
           name,
           email,
           mobileNumber,
@@ -452,6 +456,7 @@ const AuctionSheetsPageContent = () => {
                     <div className="w-full">
                       <TrueReportViewer
                         chassis={chassis}
+                        reportKey={reportData?.firstKey || reportSource?.key || searchParams.get('key') || undefined}
                         onReady={handleOriginalReportReady}
                       />
                     </div>

@@ -7,6 +7,7 @@ import { getWhatsAppUrl } from "@/constants/siteContact";
 
 interface TrueReportViewerProps {
   chassis: string;
+  reportKey?: string;
   onReady?: () => void;
 }
 
@@ -27,6 +28,7 @@ const getFilename = (disposition: string | null, chassis: string) => {
 // from XML, images, an HTML screenshot, or a locally generated QR code.
 export const TrueReportViewer = ({
   chassis,
+  reportKey,
   onReady,
 }: TrueReportViewerProps) => {
   const onReadyRef = useRef(onReady);
@@ -45,8 +47,10 @@ export const TrueReportViewer = ({
 
     const loadOriginal = async () => {
       try {
+        const params = new URLSearchParams({ chassis });
+        if (reportKey) params.set("key", reportKey);
         const response = await fetch(
-          `/api/jpcenter/download?chassis=${encodeURIComponent(chassis)}`,
+          `/api/jpcenter/download?${params.toString()}`,
           { signal: controller.signal, cache: "no-store" },
         );
         if (!response.ok) {

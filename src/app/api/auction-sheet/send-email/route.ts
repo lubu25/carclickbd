@@ -11,6 +11,7 @@ export async function POST(request: Request) {
       email,
       name,
       chassis,
+      key,
       amount,
       mobileNumber,
       downloadUrl,
@@ -112,8 +113,10 @@ export async function POST(request: Request) {
     // 2. Fetch authentic provider original PDF directly via our download route
     if (!pdfAttachment && cleanChassis) {
       try {
+        const downloadQuery = new URLSearchParams({ chassis: cleanChassis });
+        if (key && typeof key === 'string') downloadQuery.set('key', key);
         const downloadRequest = new Request(
-          `https://carclickbd.com/api/jpcenter/download?chassis=${encodeURIComponent(cleanChassis)}`,
+          `https://carclickbd.com/api/jpcenter/download?${downloadQuery.toString()}`,
         );
         const pdfResponse = await getOriginalDownloadResponse(downloadRequest);
 

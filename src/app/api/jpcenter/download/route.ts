@@ -530,7 +530,6 @@ export async function GET(request: Request) {
     let lookupError: ReportError | undefined;
     for (const host of Array.from(new Set([primary, ...PROVIDER_HOSTS]))) {
       const lookupUrl = new URL(host);
-      lookupUrl.searchParams.set("json", "");
       lookupUrl.searchParams.set("code", apiCode);
       lookupUrl.searchParams.set("chassis", chassis);
       try {
@@ -557,16 +556,17 @@ export async function GET(request: Request) {
           continue;
         }
         selectedRecord = findBestRecord(parseLookup(text), chassis);
-        if (!selectedRecord)
-          throw new ReportError(
+        if (!selectedRecord) {
+          lookupError = new ReportError(
             "An original report PDF is not available for this exact chassis. Please contact CarClickBD support",
             404,
             "EXACT_CHASSIS_NOT_FOUND",
           );
+          continue;
+        }
         lookupHost = new URL(result.url);
         break;
       } catch (error) {
-        if (error instanceof ReportError && error.status === 404) throw error;
         if (request.signal.aborted) throw error;
         lookupError =
           error instanceof ReportError
