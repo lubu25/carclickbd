@@ -125,8 +125,9 @@ export async function POST(request: Request) {
           const buffer = Buffer.from(arrayBuffer);
 
           if (
-            buffer.length > 64 &&
-            buffer.subarray(0, 5).toString('latin1') === '%PDF-'
+            buffer.length > 15000 &&
+            buffer.subarray(0, 5).toString('latin1') === '%PDF-' &&
+            !buffer.subarray(0, 1024).toString('latin1').includes('404')
           ) {
             const disposition =
               pdfResponse.headers.get('content-disposition') || '';

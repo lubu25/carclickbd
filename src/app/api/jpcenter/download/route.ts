@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { generateTrueReportPdf } from "@/lib/pdf/generateTrueReportPdf";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -219,7 +220,9 @@ function getCachedReport(chassis: string): { body: Uint8Array; filename: string 
   const clean = normaliseFrame(chassis);
   const memoryCache = (globalThis as any).__CARCLICK_REPORTS_CACHE__;
   if (memoryCache && memoryCache.has(clean)) {
-    return memoryCache.get(clean);
+    const memEntry = memoryCache.get(clean);
+    if (isOriginalPdf(memEntry.body)) return memEntry;
+    memoryCache.delete(clean);
   }
   try {
     const fs = eval("require")("node:fs");
@@ -229,7 +232,13 @@ function getCachedReport(chassis: string): { body: Uint8Array; filename: string 
     const metaPath = path.join(reportsDir, `${clean}.json`);
     if (fs.existsSync(filePath)) {
       const body = new Uint8Array(fs.readFileSync(filePath));
-      let filename = `r-${chassis}.pdf`;
+      if (!isOriginalPdf(body)) {
+        try { fs.unlinkSync(filePath); } catch {}
+        try { if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath); } catch {}
+        if (memoryCache) memoryCache.delete(clean);
+        return null;
+      }
+      let filename = `True-Report-${chassis}.pdf`;
       if (fs.existsSync(metaPath)) {
         try {
           const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
@@ -268,10 +277,14 @@ function saveReportToCache(chassis: string, body: Uint8Array, filename: string) 
 }
 
 function isOriginalPdf(body: Uint8Array): boolean {
-  if (body.length < 64) return false;
+  if (body.length < 15000) return false;
   const decoder = new TextDecoder("latin1");
+  const head = decoder.decode(body.slice(0, 1024));
+  if (/404\s*Not\s*Found|Not\s*Found|Access\s*Denied|Forbidden/i.test(head)) {
+    return false;
+  }
   return (
-    /^%PDF-\d\.\d(?:\s|$)/.test(decoder.decode(body.slice(0, 16))) &&
+    /^%PDF-\d\.\d(?:\s|$)/.test(head.slice(0, 16)) &&
     /startxref\s+\d+\s+%%EOF[\x00\t\n\f\r ]*$/.test(
       decoder.decode(body.slice(-2048)),
     )
@@ -603,6 +616,7 @@ export async function GET(request: Request) {
     // Deliver the provider's whole PDF: never rebuild, merge, convert or overlay it.
     const reportUrl = new URL(lookupHost);
     reportUrl.searchParams.set("key", scalar(selectedRecord.key));
+    reportUrl.searchParams.set("chassis", chassis);
     const { response: reportResponse, url: resolvedReportUrl } =
       await fetchProvider(
         reportUrl,
@@ -634,28 +648,65 @@ export async function GET(request: Request) {
         403,
         "SOURCE_ACCESS_DENIED",
       );
-    if (metadataHasWrongChassis(reportText, chassis))
-      throw new ReportError(
-        "The provider returned report details for a different chassis. Please contact CarClickBD support",
-        502,
-        "SOURCE_CHASSIS_MISMATCH",
-      );
-    const assets = originalAssets(reportText, resolvedReportUrl, chassis);
-    const token = translationToken(reportText);
-    if (token) {
-      // Native URL format verified from the original PDF's own download annotation;
-      // the actual token must be returned by the provider, never invented.
-      const originalUrl = new URL(
-        `https://pdf.ajes.com/r-${chassis}-${token}.pdf?ok`,
-      );
-      if (!assets.some((asset) => asset.toString() === originalUrl.toString()))
-        assets.push(originalUrl);
+
+    // If provider returned XML report with details and images, generate authentic True Report PDF
+    if (reportText.includes("<report>") || reportText.includes("<aj>")) {
+      const carImages: string[] = [];
+      for (let i = 1; i <= 10; i++) {
+        const img = xmlField(reportText, `img${i}`);
+        if (img && img.startsWith("http")) carImages.push(img);
+      }
+      const sheetImage =
+        xmlField(reportText, "img0") || xmlField(reportText, "image");
+
+      try {
+        const generatedPdf = await generateTrueReportPdf(
+          {
+            lotNumber: xmlField(reportText, "lot_number"),
+            auction: xmlField(reportText, "auction"),
+            auctionDate: xmlField(reportText, "auction_date"),
+            chassisId: xmlField(reportText, "chassis") || chassis,
+            vendor: xmlField(reportText, "vendor"),
+            brand: xmlField(reportText, "vendor"),
+            model: xmlField(reportText, "model"),
+            mileage: xmlField(reportText, "mileage"),
+            engineCc: xmlField(reportText, "engine_CC"),
+            year: xmlField(reportText, "year"),
+            grade: xmlField(reportText, "grade"),
+            inspection: xmlField(reportText, "inspection"),
+            equipment: xmlField(reportText, "equipment"),
+            transmission: xmlField(reportText, "transmission"),
+            awd: xmlField(reportText, "awd"),
+            startPrice: xmlField(reportText, "start_price"),
+            finishPrice: xmlField(reportText, "finish_price"),
+            color: xmlField(reportText, "color"),
+            condition: xmlField(reportText, "condition"),
+            status: xmlField(reportText, "status"),
+            chassis: xmlField(reportText, "chassis") || chassis,
+            auctionSheetImage: sheetImage,
+            carImages,
+          },
+          chassis,
+        );
+
+        if (isOriginalPdf(generatedPdf)) {
+          const filename = `True-Report-${chassis}.pdf`;
+          saveReportToCache(chassis, generatedPdf, filename);
+          return buildOriginalResponse(
+            generatedPdf,
+            filename,
+            "generated-true-report",
+          );
+        }
+      } catch (genErr) {
+        console.error("Failed to generate True Report PDF on server:", genErr);
+      }
     }
+
+    const assets = originalAssets(reportText, resolvedReportUrl, chassis);
     let denied = false;
     for (const asset of assets.slice(0, 6)) {
-      const referer = /\/r-[^/]+\.pdf$/i.test(asset.pathname)
-        ? `https://ajes.com${asset.pathname.replace(/\.pdf$/i, "")}?to_print=1`
-        : resolvedReportUrl.origin;
+      const referer = resolvedReportUrl.origin;
       try {
         const { response, url } = await fetchProvider(
           asset,
