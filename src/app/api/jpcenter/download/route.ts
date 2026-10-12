@@ -434,7 +434,9 @@ function translationToken(text: string): string {
 
 export async function GET(request: Request) {
   try {
-    const rawChassis = new URL(request.url).searchParams.get("chassis");
+    const searchParams = new URL(request.url).searchParams;
+    const rawChassis = searchParams.get("chassis");
+    const suppliedKey = searchParams.get("key")?.trim() || "";
     if (
       !rawChassis ||
       !/^[A-Z0-9]+(?:-[A-Z0-9]+)?$/i.test(rawChassis) ||
@@ -528,6 +530,18 @@ export async function GET(request: Request) {
     let lookupHost: URL | null = null;
     let selectedRecord: ProviderRecord | undefined;
     let lookupError: ReportError | undefined;
+
+    // If the caller already has the provider record key, skip the lookup and build a synthetic
+    // record directly so we can jump straight to the PDF download step.
+    if (suppliedKey && /^[a-zA-Z0-9_-]{4,256}$/.test(suppliedKey)) {
+      for (const host of Array.from(new Set([primary, ...PROVIDER_HOSTS]))) {
+        lookupHost = new URL(host);
+        selectedRecord = { key: suppliedKey } as ProviderRecord;
+        break;
+      }
+    }
+
+    if (!lookupHost || !selectedRecord) {
     for (const host of Array.from(new Set([primary, ...PROVIDER_HOSTS]))) {
       const lookupUrl = new URL(host);
       lookupUrl.searchParams.set("code", apiCode);
@@ -576,6 +590,7 @@ export async function GET(request: Request) {
               );
       }
     }
+    } // end key-less lookup block
     if (!lookupHost || !selectedRecord)
       throw (
         lookupError ||
