@@ -98,8 +98,22 @@ function parseLookup(text: string): ProviderRecord[] {
     return (text.match(/<row(?:\s+[^>]*)?>[\s\S]*?<\/row>/gi) || []).map(
       (row) => ({
         key: xmlField(row, "key"),
-        color: xmlField(row, "color"),
-        car_frame: xmlField(row, "car_frame"),
+        color: xmlField(row, "color") || xmlField(row, "colortag"),
+        colorTag: xmlField(row, "color") || xmlField(row, "colortag"),
+        car_frame:
+          xmlField(row, "car_frame") ||
+          xmlField(row, "chassis") ||
+          xmlField(row, "frame") ||
+          xmlField(row, "chassis_id") ||
+          xmlField(row, "chassisId"),
+        chassis:
+          xmlField(row, "car_frame") ||
+          xmlField(row, "chassis") ||
+          xmlField(row, "frame"),
+        frame:
+          xmlField(row, "car_frame") ||
+          xmlField(row, "chassis") ||
+          xmlField(row, "frame"),
       }),
     );
   }
@@ -143,14 +157,114 @@ function exactRecord(record: ProviderRecord, chassis: string): boolean {
   const frame = scalar(
     record.car_frame ?? record.frame ?? record.chassis ?? record.chassisId,
   );
-  if (frame && normaliseFrame(frame) !== normaliseFrame(chassis)) return false;
+  const cleanChassis = normaliseFrame(chassis);
+  if (frame && normaliseFrame(frame) === cleanChassis && !!scalar(record.key))
+    return true;
+  if (frame && normaliseFrame(frame) !== cleanChassis) return false;
   const matchFlag = scalar(record.colorTag ?? record.color);
   return (
     (matchFlag === "3" ||
       record.isExactMatch === true ||
-      (!matchFlag && !!frame)) &&
+      (!matchFlag && !!frame) ||
+      !matchFlag) &&
     !!scalar(record.key)
   );
+}
+
+function findBestRecord(
+  records: ProviderRecord[],
+  chassis: string,
+): ProviderRecord | undefined {
+  if (!records || records.length === 0) return undefined;
+  const cleanChassis = normaliseFrame(chassis);
+
+  // 1. Exact car_frame match with valid key
+  const matchByFrame = records.find((record) => {
+    const f = scalar(
+      record.car_frame ?? record.frame ?? record.chassis ?? record.chassisId,
+    );
+    return f && normaliseFrame(f) === cleanChassis && !!scalar(record.key);
+  });
+  if (matchByFrame) return matchByFrame;
+
+  // 2. Exact match flag from provider with valid key (ensuring frame doesn't conflict)
+  const matchByFlag = records.find((record) => {
+    const f = scalar(
+      record.car_frame ?? record.frame ?? record.chassis ?? record.chassisId,
+    );
+    if (f && normaliseFrame(f) !== cleanChassis) return false;
+    const matchFlag = scalar(record.colorTag ?? record.color);
+    return (
+      (matchFlag === "3" || record.isExactMatch === true) &&
+      !!scalar(record.key)
+    );
+  });
+  if (matchByFlag) return matchByFlag;
+
+  // 3. Any record where frame is empty or matches and has valid key
+  const compatible = records.find((record) => {
+    const f = scalar(
+      record.car_frame ?? record.frame ?? record.chassis ?? record.chassisId,
+    );
+    if (f && normaliseFrame(f) !== cleanChassis) return false;
+    return !f && !!scalar(record.key);
+  });
+  if (compatible) return compatible;
+
+  return undefined;
+}
+
+// Persistent memory & disk cache for purchased reports so repeated opens always succeed instantly
+function getCachedReport(chassis: string): { body: Uint8Array; filename: string } | null {
+  const clean = normaliseFrame(chassis);
+  const memoryCache = (globalThis as any).__CARCLICK_REPORTS_CACHE__;
+  if (memoryCache && memoryCache.has(clean)) {
+    return memoryCache.get(clean);
+  }
+  try {
+    const fs = eval("require")("node:fs");
+    const path = eval("require")("node:path");
+    const reportsDir = path.join(process.cwd(), "data", "reports");
+    const filePath = path.join(reportsDir, `${clean}.pdf`);
+    const metaPath = path.join(reportsDir, `${clean}.json`);
+    if (fs.existsSync(filePath)) {
+      const body = new Uint8Array(fs.readFileSync(filePath));
+      let filename = `r-${chassis}.pdf`;
+      if (fs.existsSync(metaPath)) {
+        try {
+          const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+          if (meta.filename) filename = meta.filename;
+        } catch {}
+      }
+      const entry = { body, filename };
+      if (memoryCache) memoryCache.set(clean, entry);
+      return entry;
+    }
+  } catch {}
+  return null;
+}
+
+function saveReportToCache(chassis: string, body: Uint8Array, filename: string) {
+  const clean = normaliseFrame(chassis);
+  if (!(globalThis as any).__CARCLICK_REPORTS_CACHE__) {
+    (globalThis as any).__CARCLICK_REPORTS_CACHE__ = new Map();
+  }
+  (globalThis as any).__CARCLICK_REPORTS_CACHE__.set(clean, { body, filename });
+  try {
+    const fs = eval("require")("node:fs");
+    const path = eval("require")("node:path");
+    const reportsDir = path.join(process.cwd(), "data", "reports");
+    if (!fs.existsSync(reportsDir)) {
+      fs.mkdirSync(reportsDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(reportsDir, `${clean}.pdf`), Buffer.from(body));
+    fs.writeFileSync(
+      path.join(reportsDir, `${clean}.json`),
+      JSON.stringify({ filename, chassis, savedAt: new Date().toISOString() })
+    );
+  } catch (err) {
+    console.warn("Could not persist report to disk cache:", err);
+  }
 }
 
 function isOriginalPdf(body: Uint8Array): boolean {
@@ -194,13 +308,11 @@ function originalFilename(
   return /\.pdf$/i.test(filename) ? filename : `r-${chassis}.pdf`;
 }
 
-function originalAttachment(
+function buildOriginalResponse(
   body: Uint8Array,
-  response: Response,
-  url: URL,
-  chassis: string,
+  filename: string,
+  source: string = "original",
 ) {
-  const filename = originalFilename(response, url, chassis);
   const fallbackName = filename
     .replace(/[^\x20-\x7e]/g, "_")
     .replace(/["\\]/g, "_");
@@ -215,9 +327,20 @@ function originalAttachment(
       "Content-Disposition": `attachment; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`,
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
-      "X-Report-Source": "original",
+      "X-Report-Source": source,
     },
   });
+}
+
+function originalAttachment(
+  body: Uint8Array,
+  response: Response,
+  url: URL,
+  chassis: string,
+) {
+  const filename = originalFilename(response, url, chassis);
+  saveReportToCache(chassis, body, filename);
+  return buildOriginalResponse(body, filename, "original");
 }
 
 function originalAssets(text: string, base: URL, chassis: string): URL[] {
@@ -324,6 +447,12 @@ export async function GET(request: Request) {
       );
     }
     const chassis = rawChassis.toUpperCase();
+
+    // Check persistent cache first: If report was already fetched/paid, return instantly without re-querying provider
+    const cached = getCachedReport(chassis);
+    if (cached && isOriginalPdf(cached.body)) {
+      return buildOriginalResponse(cached.body, cached.filename, "cached-original");
+    }
     const apiCode =
       process.env.JPCENTER_API_CODE ||
       process.env.JPCENTER_API_KEY ||
@@ -427,9 +556,7 @@ export async function GET(request: Request) {
           );
           continue;
         }
-        selectedRecord = parseLookup(text).find((record) =>
-          exactRecord(record, chassis),
-        );
+        selectedRecord = findBestRecord(parseLookup(text), chassis);
         if (!selectedRecord)
           throw new ReportError(
             "An original report PDF is not available for this exact chassis. Please contact CarClickBD support",

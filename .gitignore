@@ -53,4 +53,5 @@ api_response.json
 
 # temporary files
 /tmp/
+/data/reports/
 
