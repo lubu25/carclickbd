@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Suspense, useCallback, useEffect, useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { Spin } from 'antd';
 import TrueReportViewer from '@/components/auction-sheet/TrueReportViewer';
 import {
   useCreateAuctionSheetOrderMutation,
@@ -168,7 +167,6 @@ const AuctionSheetsPageContent = () => {
   const statusParam = searchParams.get('status') || '';
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseError, setPurchaseError] = useState('');
-  const [frontendJpcenterData, setFrontendJpcenterData] = useState<any>(null);
   
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -200,11 +198,6 @@ const AuctionSheetsPageContent = () => {
       setIsApplyingCoupon(false);
     }
   };
-  const [isFrontendDownloading, setIsFrontendDownloading] = useState(false);
-  const [fullReportData, setFullReportData] = useState<any>(null);
-  const [isLoadingFullReport, setIsLoadingFullReport] = useState(false);
-  const reportFetchStarted = useRef(false);
-  const automaticDownloadStarted = useRef(false);
   const [getAuctionSheetReport, { data, error, isFetching }] =
     useLazyGetAuctionSheetReportQuery();
   const [createAuctionSheetOrder, { isLoading: isCreatingOrder }] =
@@ -218,87 +211,28 @@ const AuctionSheetsPageContent = () => {
   const paymentStatus =
     paymentStatusResponse?.data?.data || paymentStatusResponse?.data;
   const isPaymentPaid = paymentStatus?.paid === true || statusParam === 'success';
-  const downloadUrl = frontendJpcenterData?.fileUrl || '';
 
-  // Fetch complete True Report (all auction runs + car photos) when payment is confirmed
-  useEffect(() => {
-    if (
-      (statusParam === 'success' || isPaymentPaid) &&
-      chassis &&
-      !fullReportData &&
-      !isLoadingFullReport &&
-      !reportFetchStarted.current
-    ) {
-      reportFetchStarted.current = true;
-      setIsLoadingFullReport(true);
-      setPurchaseError('');
-
-      fetch(`/api/jpcenter?chassis=${encodeURIComponent(chassis)}&full=true`)
-        .then(async (response) => {
-          if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.error || 'Could not retrieve full report data');
-          }
-          const resJson = await response.json();
-          if (resJson.success && resJson.data) {
-            setFullReportData(resJson.data);
-            
-            // Check and trigger email confirmation if pending
-            if (typeof window !== 'undefined') {
-              const pendingOrderStr = window.localStorage.getItem('pendingAuctionOrder');
-              if (pendingOrderStr) {
-                try {
-                  const pendingOrder = JSON.parse(pendingOrderStr);
-                  if (pendingOrder.chassis === chassis || !pendingOrder.chassis) {
-                    window.localStorage.removeItem('pendingAuctionOrder');
-                    pendingOrder.downloadUrl =
-                      window.location.origin +
-                      `/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
-                    fetch('/api/auction-sheet/send-email', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(pendingOrder),
-                      keepalive: true,
-                    }).catch((e) => console.error('Email dispatch error:', e));
-                  }
-                } catch (e) {
-                  console.error('Failed to parse pending order:', e);
-                }
-              }
-            }
-          } else {
-            throw new Error('Report data unavailable');
-          }
-          setIsLoadingFullReport(false);
-        })
-        .catch((err) => {
-          console.error('Failed to fetch full report:', err);
-          setIsLoadingFullReport(false);
-          setPurchaseError(
-            err instanceof Error ? err.message : 'Could not fetch full true report'
-          );
-        });
+  // Keep the existing purchase notification, after the original PDF is ready.
+  const handleOriginalReportReady = useCallback(() => {
+    const pendingOrderStr = window.localStorage.getItem('pendingAuctionOrder');
+    if (!pendingOrderStr) return;
+    try {
+      const pendingOrder = JSON.parse(pendingOrderStr);
+      if (pendingOrder.chassis !== chassis && pendingOrder.chassis) return;
+      window.localStorage.removeItem('pendingAuctionOrder');
+      pendingOrder.downloadUrl =
+        window.location.origin +
+        `/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
+      fetch('/api/auction-sheet/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingOrder),
+        keepalive: true,
+      }).catch((error) => console.error('Email dispatch error:', error));
+    } catch (error) {
+      console.error('Failed to parse pending order:', error);
     }
-  }, [statusParam, isPaymentPaid, chassis, fullReportData, isLoadingFullReport]);
-
-  // Auto-download the report after the server has returned the actual file.
-  useEffect(() => {
-    if (
-      statusParam !== 'success' ||
-      !downloadUrl ||
-      automaticDownloadStarted.current
-    ) {
-      return;
-    }
-    automaticDownloadStarted.current = true;
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = frontendJpcenterData?.filename || `auction-sheet-${chassis || 'report'}.pdf`;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }, [downloadUrl, frontendJpcenterData, statusParam, chassis]);
+  }, [chassis]);
 
   useEffect(() => {
     const cleanChassis = chassis.trim();
@@ -460,18 +394,7 @@ const AuctionSheetsPageContent = () => {
   };
 
   const handleDownloadOrPurchase = () => {
-    if (isPaymentPaid) {
-      if (downloadUrl) {
-        window.open(downloadUrl, '_blank');
-      } else if (isFrontendDownloading) {
-        setPurchaseError('Please wait, downloading your auction sheet...');
-      } else {
-        setPurchaseError(
-          'Payment is confirmed, but the auction sheet file is not available yet. Please contact CarClickBD.',
-        );
-      }
-      return;
-    }
+    if (isPaymentPaid) return;
 
     if (!downloadAvailable && false) { // Bypassed for testing
       setPurchaseError(
@@ -525,43 +448,12 @@ const AuctionSheetsPageContent = () => {
             ) : (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  {isPaymentPaid && isLoadingFullReport ? (
-                    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-4 rounded-3xl border-2 border-[#4A90E2] bg-white p-12 text-center shadow-lg">
-                      <Spin size="large" />
-                      <p className="text-xl font-black text-slate-800">Loading Verified True Report & Car Photos…</p>
-                      <p className="text-sm font-semibold text-slate-500">
-                        Retrieving official Japanese auction sheet, vehicle inspection photos, and condition details for Chassis {chassis}
-                      </p>
-                    </div>
-                  ) : isPaymentPaid && fullReportData?.reports && fullReportData.reports.length > 0 ? (
+                  {isPaymentPaid ? (
                     <div className="w-full">
                       <TrueReportViewer
                         chassis={chassis}
-                        reports={fullReportData.reports}
-                        keyForTranslate={fullReportData.keyForTranslate}
+                        onReady={handleOriginalReportReady}
                       />
-                    </div>
-                  ) : isPaymentPaid && purchaseError ? (
-                    <div className="mx-auto w-full max-w-2xl rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-                      <div className="mb-3 flex justify-center text-red-500">
-                        <AlertCircle size={48} />
-                      </div>
-                      <h2 className="mb-2 text-xl font-bold text-slate-800">Payment Successful, but Report Delayed</h2>
-                      <p className="mb-6 text-sm font-medium text-slate-600">
-                        {purchaseError}
-                      </p>
-                      <p className="mb-6 text-sm text-slate-600">
-                        Don&apos;t worry, we have received your payment. Please contact our support team on WhatsApp to get your report manually.
-                      </p>
-                      <Link
-                        href={getWhatsAppUrl(`Hello, I paid for auction sheet verification (Chassis: ${chassis}) but received an error: ${purchaseError}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 text-sm font-black text-white transition hover:bg-[#20bd5a]"
-                      >
-                        <MessageCircle size={18} />
-                        Contact Support
-                      </Link>
                     </div>
                   ) : (
                     <>

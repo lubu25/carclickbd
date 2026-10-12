@@ -57,7 +57,10 @@ async function fetchFromHosts(urlBuilder: (host: string) => string) {
 }
 
 function extractTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = xml.match(
+    new RegExp(`<${escapedTag}(?=[\\s>])[^>]*>([\\s\\S]*?)<\\/${escapedTag}>`, "i")
+  );
   return match ? match[1].trim() : "";
 }
 
@@ -141,8 +144,8 @@ function parseFullReportXml(xmlText: string, chassis: string) {
     return {
       lotNumber: extractTag(reportXml, "lot_number"),
       auction: extractTag(reportXml, "auction"),
-      auctionDate: extractTag(reportXml, "auction_date"),
-      chassisId: extractTag(reportXml, "chassis_ID"),
+      chassisId: extractTag(reportXml, "chassis") || extractTag(reportXml, "chassis_ID") || chassis,
+      chassisPrefix: extractTag(reportXml, "chassis_ID"),
       vendor: extractTag(reportXml, "vendor"),
       brand: extractTag(reportXml, "vendor"),
       model: extractTag(reportXml, "model"),
