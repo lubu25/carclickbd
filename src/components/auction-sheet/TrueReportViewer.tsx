@@ -94,7 +94,7 @@ export const TrueReportViewer = ({
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [chassis, attempt]);
+  }, [chassis, attempt, reportKey]);
 
   if (isLoading || (report && report.chassis !== chassis)) {
     return (

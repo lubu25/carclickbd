@@ -535,7 +535,10 @@ export async function GET(request: Request) {
     // record directly so we can jump straight to the PDF download step.
     if (suppliedKey && /^[a-zA-Z0-9_-]{4,256}$/.test(suppliedKey)) {
       for (const host of Array.from(new Set([primary, ...PROVIDER_HOSTS]))) {
-        lookupHost = new URL(host);
+        const keyUrl = new URL(host);
+        keyUrl.searchParams.set("code", apiCode);
+        keyUrl.searchParams.set("chassis", chassis);
+        lookupHost = keyUrl;
         selectedRecord = { key: suppliedKey } as ProviderRecord;
         break;
       }

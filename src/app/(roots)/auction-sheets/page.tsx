@@ -167,7 +167,20 @@ const AuctionSheetsPageContent = () => {
   const statusParam = searchParams.get('status') || '';
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseError, setPurchaseError] = useState('');
-  
+  // Key stored in localStorage at purchase time — used immediately on the success page
+  // even before the search API responds, so the PDF loads on the very first visit.
+  const [localStorageKey, setLocalStorageKey] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const pending = JSON.parse(window.localStorage.getItem('pendingAuctionOrder') || '{}');
+      if (pending?.key && typeof pending.key === 'string') {
+        setLocalStorageKey(pending.key);
+      }
+    } catch {}
+  }, []);
+
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -456,7 +469,13 @@ const AuctionSheetsPageContent = () => {
                     <div className="w-full">
                       <TrueReportViewer
                         chassis={chassis}
-                        reportKey={reportData?.firstKey || reportSource?.key || searchParams.get('key') || undefined}
+                        reportKey={
+                          searchParams.get('key') ||
+                          localStorageKey ||
+                          reportData?.firstKey ||
+                          reportSource?.key ||
+                          undefined
+                        }
                         onReady={handleOriginalReportReady}
                       />
                     </div>
