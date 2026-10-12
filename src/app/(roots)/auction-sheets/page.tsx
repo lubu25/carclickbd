@@ -426,9 +426,9 @@ const AuctionSheetsPageContent = () => {
 
   return (
     <main className="bg-slate-50">
-      <section className="bg-white px-4 py-14 md:px-8 md:py-20">
+      <section className={`bg-white px-4 py-14 md:px-8 md:py-20 ${isPaymentPaid ? 'print:p-0 print:m-0 print:border-none' : ''}`}>
         <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className={`mx-auto max-w-4xl text-center ${isPaymentPaid ? 'print:hidden' : ''}`}>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#e50914]">
               Japanese auction sheet verification
             </p>
@@ -442,7 +442,7 @@ const AuctionSheetsPageContent = () => {
             </p>
           </div>
 
-          <div className="mx-auto mt-10 max-w-4xl rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.12)] md:p-6">
+          <div className={`mx-auto mt-10 max-w-4xl rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.12)] md:p-6 ${isPaymentPaid ? 'print:border-none print:shadow-none print:p-0 print:m-0 print:max-w-none' : ''}`}>
             {!chassis ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
                 <div className="flex items-center gap-3 text-amber-700">

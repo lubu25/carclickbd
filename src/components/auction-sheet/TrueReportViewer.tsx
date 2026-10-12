@@ -75,6 +75,38 @@ const EXPLANATIONS = [
   { text: "Y1: Small Hole or Crack | Y2: Hole or Crack | Y3: Big Hole or Crack" },
 ];
 
+export const getProxiedImageUrl = (url?: string): string => {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("/")) {
+    return url;
+  }
+  return `/api/jpcenter/image?url=${encodeURIComponent(url)}`;
+};
+
+export const convertUrlToDataUrl = async (url?: string): Promise<string> => {
+  if (!url) return "";
+  if (url.startsWith("data:")) return url;
+
+  const fetchUrl = url.startsWith("http")
+    ? `/api/jpcenter/image?url=${encodeURIComponent(url)}`
+    : url;
+
+  try {
+    const res = await fetch(fetchUrl);
+    if (!res.ok) return "";
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn("Could not convert image to Data URL:", url, err);
+    return "";
+  }
+};
+
 export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
   chassis,
   reports: initialReports,
@@ -93,7 +125,11 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
   const [isTranslateModalOpen, setIsTranslateModalOpen] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
+  const [isPrintingReport, setIsPrintingReport] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [sheetDataUrl, setSheetDataUrl] = useState<string>("");
+  const [carPhotosDataUrls, setCarPhotosDataUrls] = useState<string[]>([]);
+  const [logoDataUrl, setLogoDataUrl] = useState<string>("");
 
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +141,15 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
       .then(setQrCodeDataUrl)
       .catch((err) => console.warn("Failed to generate QR Code:", err));
   }, [chassis]);
+
+  // Preload logo as Data URL for canvas and print
+  useEffect(() => {
+    convertUrlToDataUrl("/assets/logo.png")
+      .then((dataUrl) => {
+        if (dataUrl) setLogoDataUrl(dataUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   // Sync when initialReports changes
   useEffect(() => {
@@ -165,7 +210,34 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
   const currentReport = reports[selectedAuctionIndex] || reports[0] || {};
   const allReports = reports.length > 0 ? reports : [currentReport];
 
-  // 1. Download PDF Handler
+  // Preload auction sheet and car photos as Data URLs whenever currentReport changes
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (currentReport.auctionSheetImage) {
+      convertUrlToDataUrl(currentReport.auctionSheetImage).then((dUrl) => {
+        if (!isCancelled && dUrl) setSheetDataUrl(dUrl);
+      });
+    } else {
+      setSheetDataUrl("");
+    }
+
+    if (currentReport.carImages && currentReport.carImages.length > 0) {
+      Promise.all(
+        currentReport.carImages.slice(0, 2).map((imgUrl) => convertUrlToDataUrl(imgUrl))
+      ).then((urls) => {
+        if (!isCancelled) setCarPhotosDataUrls(urls);
+      });
+    } else {
+      setCarPhotosDataUrls([]);
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentReport.auctionSheetImage, currentReport.carImages]);
+
+  // 1. Download PDF Handler (Preserved without modification)
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     message.loading({ content: "Preparing Official True Report PDF...", key: "pdf_dl" });
@@ -225,22 +297,81 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
     }
   };
 
-  // 2. Download Screenshot (Image) Handler
+  // 2. Download Screenshot (Image) Handler with 100% Auction Sheet Rendering
   const handleDownloadScreenshot = async () => {
     setIsCapturingScreenshot(true);
     message.loading({ content: "Generating True Report screenshot...", key: "img_dl" });
 
     try {
-      const { default: html2canvas } = await import("html2canvas");
       const element = reportContainerRef.current;
       if (!element) throw new Error("Report element not found");
+
+      // 1. Ensure sheet data URL is ready
+      let currentSheetUrl = sheetDataUrl;
+      if (!currentSheetUrl && currentReport.auctionSheetImage) {
+        currentSheetUrl = await convertUrlToDataUrl(currentReport.auctionSheetImage);
+        if (currentSheetUrl) setSheetDataUrl(currentSheetUrl);
+      }
+
+      // 2. Ensure car photos data URLs are ready
+      let currentPhotos = [...carPhotosDataUrls];
+      if (currentReport.carImages && currentReport.carImages.length > 0) {
+        const loadedPhotos = await Promise.all(
+          currentReport.carImages.slice(0, 2).map((img, i) =>
+            currentPhotos[i] ? Promise.resolve(currentPhotos[i]) : convertUrlToDataUrl(img)
+          )
+        );
+        currentPhotos = loadedPhotos;
+      }
+
+      // 3. Wait for all <img> elements inside reportContainerRef to be loaded and decoded
+      const imgElements = Array.from(element.querySelectorAll("img"));
+      await Promise.all(
+        imgElements.map(async (img) => {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+          if ("decode" in img) {
+            try {
+              await img.decode();
+            } catch {}
+          }
+        })
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const { default: html2canvas } = await import("html2canvas");
 
       const canvas = await html2canvas(element, {
         scale: 3, // Ultra-high resolution crisp quality
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
         backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Guarantee that in cloned DOM, the auction sheet and car photos have data URLs
+          const clonedSheet = clonedDoc.getElementById("true-report-auction-sheet-img") as HTMLImageElement | null;
+          if (clonedSheet && currentSheetUrl) {
+            clonedSheet.src = currentSheetUrl;
+          }
+          const clonedPhoto0 = clonedDoc.getElementById("true-report-car-photo-0") as HTMLImageElement | null;
+          if (clonedPhoto0 && currentPhotos[0]) {
+            clonedPhoto0.src = currentPhotos[0];
+          }
+          const clonedPhoto1 = clonedDoc.getElementById("true-report-car-photo-1") as HTMLImageElement | null;
+          if (clonedPhoto1 && currentPhotos[1]) {
+            clonedPhoto1.src = currentPhotos[1];
+          }
+          if (logoDataUrl) {
+            const clonedLogo = clonedDoc.getElementById("true-report-logo-img") as HTMLImageElement | null;
+            if (clonedLogo) clonedLogo.src = logoDataUrl;
+          }
+        },
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -260,8 +391,195 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  // 3. Print Handler (Isolated 1-Page A4 True Report with Auction Sheet)
+  const handlePrint = async () => {
+    setIsPrintingReport(true);
+    message.loading({ content: "Preparing report for print...", key: "print_prep", duration: 1.5 });
+
+    const element = reportContainerRef.current;
+    if (!element) {
+      window.print();
+      setIsPrintingReport(false);
+      return;
+    }
+
+    try {
+      // 1. Ensure sheet data URL is ready
+      let currentSheetUrl = sheetDataUrl;
+      if (!currentSheetUrl && currentReport.auctionSheetImage) {
+        currentSheetUrl = await convertUrlToDataUrl(currentReport.auctionSheetImage);
+        if (currentSheetUrl) setSheetDataUrl(currentSheetUrl);
+      }
+
+      // 2. Ensure car photos data URLs are ready
+      let currentPhotos = [...carPhotosDataUrls];
+      if (currentReport.carImages && currentReport.carImages.length > 0) {
+        const loadedPhotos = await Promise.all(
+          currentReport.carImages.slice(0, 2).map((img, i) =>
+            currentPhotos[i] ? Promise.resolve(currentPhotos[i]) : convertUrlToDataUrl(img)
+          )
+        );
+        currentPhotos = loadedPhotos;
+      }
+
+      // 3. Wait for images to decode
+      const imgElements = Array.from(element.querySelectorAll("img"));
+      await Promise.all(
+        imgElements.map(async (img) => {
+          if (!img.complete) {
+            await new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            });
+          }
+          if ("decode" in img) {
+            try {
+              await img.decode();
+            } catch {}
+          }
+        })
+      );
+
+      // 4. Create isolated print iframe
+      const printFrame = document.createElement("iframe");
+      printFrame.setAttribute("id", "true-report-print-frame");
+      printFrame.style.position = "fixed";
+      printFrame.style.right = "0";
+      printFrame.style.bottom = "0";
+      printFrame.style.width = "0";
+      printFrame.style.height = "0";
+      printFrame.style.border = "0";
+      printFrame.style.visibility = "hidden";
+      document.body.appendChild(printFrame);
+
+      const frameDoc = printFrame.contentWindow?.document;
+      if (!frameDoc) {
+        window.print();
+        setIsPrintingReport(false);
+        return;
+      }
+
+      frameDoc.open();
+      frameDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>True Report - ${chassis}</title>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <style>
+              @page {
+                size: A4 portrait;
+                margin: 5mm 6mm;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                width: 100% !important;
+              }
+              #true-report-sheet {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                padding: 4mm 6mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: #ffffff !important;
+                page-break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+              #true-report-auction-sheet-img {
+                max-height: 400px !important;
+                width: auto !important;
+                height: auto !important;
+                max-width: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+              }
+              img {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            </style>
+          </head>
+          <body>
+            <div id="print-root"></div>
+          </body>
+        </html>
+      `);
+
+      // Copy all style sheets and style elements from head
+      document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
+        try {
+          frameDoc.head.appendChild(node.cloneNode(true));
+        } catch {}
+      });
+
+      // Clone report element and attach into iframe
+      const clonedNode = element.cloneNode(true) as HTMLElement;
+      clonedNode.style.boxShadow = "none";
+      clonedNode.style.border = "none";
+      clonedNode.style.maxWidth = "100%";
+      clonedNode.style.margin = "0 auto";
+
+      if (currentSheetUrl) {
+        const clonedSheet = clonedNode.querySelector("#true-report-auction-sheet-img") as HTMLImageElement | null;
+        if (clonedSheet) clonedSheet.src = currentSheetUrl;
+      }
+      if (currentPhotos[0]) {
+        const clonedPhoto0 = clonedNode.querySelector("#true-report-car-photo-0") as HTMLImageElement | null;
+        if (clonedPhoto0) clonedPhoto0.src = currentPhotos[0];
+      }
+      if (currentPhotos[1]) {
+        const clonedPhoto1 = clonedNode.querySelector("#true-report-car-photo-1") as HTMLImageElement | null;
+        if (clonedPhoto1) clonedPhoto1.src = currentPhotos[1];
+      }
+      if (logoDataUrl) {
+        const clonedLogo = clonedNode.querySelector("#true-report-logo-img") as HTMLImageElement | null;
+        if (clonedLogo) clonedLogo.src = logoDataUrl;
+      }
+
+      frameDoc.getElementById("print-root")?.appendChild(clonedNode);
+      frameDoc.close();
+
+      // Wait for images inside iframe
+      const iframeImgs = Array.from(frameDoc.querySelectorAll("img"));
+      await Promise.all(
+        iframeImgs.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      setTimeout(() => {
+        printFrame.contentWindow?.focus();
+        printFrame.contentWindow?.print();
+        setIsPrintingReport(false);
+
+        setTimeout(() => {
+          try {
+            document.body.removeChild(printFrame);
+          } catch {}
+        }, 3000);
+      }, 350);
+    } catch (err) {
+      console.error("Print Error:", err);
+      window.print();
+      setIsPrintingReport(false);
+    }
   };
 
   const specRows = [
@@ -408,9 +726,10 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           {/* Print Button */}
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
+            disabled={isPrintingReport}
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
           >
-            <Printer size={16} />
+            {isPrintingReport ? <Spin size="small" /> : <Printer size={16} />}
             Print
           </button>
         </div>
@@ -431,7 +750,11 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
             {/* Left: CarClick BD Logo */}
             <div className="relative h-12 w-48 sm:h-14 sm:w-56 shrink-0">
               <img
-                src="/assets/logo.png"
+                id="true-report-logo-img"
+                src={logoDataUrl || "/assets/logo.png"}
+                crossOrigin="anonymous"
+                loading="eager"
+                decoding="sync"
                 alt="CarClick BD"
                 className="h-full w-full object-contain object-left"
               />
@@ -451,7 +774,7 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           {/* 2. THREE-COLUMN MAIN GRID */}
           <div className="grid grid-cols-12 gap-3.5 pt-2">
             {/* COLUMN 1: LEFT SPECIFICATIONS TABLE (3.5 cols) */}
-            <div className="col-span-12 sm:col-span-4 flex flex-col">
+            <div className="col-span-12 sm:col-span-4 print:col-span-4 flex flex-col">
               {/* Amber Box Header */}
               <div className="bg-[#b26610] text-white text-center py-2 px-1 rounded-t shadow-sm">
                 <h2 className="font-serif font-bold text-base tracking-wider uppercase">
@@ -489,21 +812,32 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
             </div>
 
             {/* COLUMN 2: CENTER - ORIGINAL JAPANESE AUCTION SHEET (4.8 cols) */}
-            <div className="col-span-12 sm:col-span-5 flex flex-col">
+            <div className="col-span-12 sm:col-span-5 print:col-span-5 flex flex-col">
               <div
                 onClick={() =>
                   currentReport.auctionSheetImage &&
                   setActiveModalImage(currentReport.auctionSheetImage)
                 }
-                className="relative flex h-full min-h-[350px] w-full cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 bg-white p-1 shadow-xs transition hover:border-[#003399]"
+                className="relative flex h-full min-h-[350px] w-full cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 bg-white p-1 shadow-xs transition hover:border-[#003399] print:h-auto print:min-h-0 print:overflow-visible print:border-slate-300"
                 title="Click to view full screen"
               >
                 {currentReport.auctionSheetImage ? (
                   <img
-                    src={currentReport.auctionSheetImage}
+                    id="true-report-auction-sheet-img"
+                    src={sheetDataUrl || getProxiedImageUrl(currentReport.auctionSheetImage)}
+                    crossOrigin="anonymous"
+                    loading="eager"
+                    decoding="sync"
                     alt={`Auction sheet for ${chassis}`}
-                    className="h-full w-full object-contain"
-                    style={{ maxHeight: "420px" }}
+                    className="h-auto max-h-[420px] w-auto max-w-full object-contain print:max-h-[390px] print:w-auto"
+                    style={{
+                      maxHeight: "420px",
+                      maxWidth: "100%",
+                      height: "auto",
+                      width: "auto",
+                      display: "block",
+                      margin: "0 auto",
+                    }}
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-2 p-8 text-center text-slate-400">
@@ -515,7 +849,7 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
             </div>
 
             {/* COLUMN 3: RIGHT - AUCTION SHEET EXPLANATION (3.7 cols) */}
-            <div className="col-span-12 sm:col-span-3 flex flex-col">
+            <div className="col-span-12 sm:col-span-3 print:col-span-3 flex flex-col">
               <div className="border-b border-slate-800 pb-1 mb-2">
                 <h3 className="font-serif italic font-bold text-xs sm:text-sm text-slate-900">
                   Auction Sheet Explanation
@@ -576,7 +910,7 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           {/* 3. BOTTOM SECTION: CAR PHOTOS & QR CODE */}
           <div className="grid grid-cols-12 gap-3.5 pt-4">
             {/* Car Photo 1 */}
-            <div className="col-span-6 sm:col-span-4">
+            <div className="col-span-6 sm:col-span-4 print:col-span-4">
               <div
                 onClick={() =>
                   currentReport.carImages?.[0] &&
@@ -586,21 +920,25 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
               >
                 {currentReport.carImages?.[0] ? (
                   <img
-                    src={currentReport.carImages[0]}
+                    id="true-report-car-photo-0"
+                    src={carPhotosDataUrls[0] || getProxiedImageUrl(currentReport.carImages[0])}
+                    crossOrigin="anonymous"
+                    loading="eager"
+                    decoding="sync"
                     alt={`Photo 1 for ${chassis}`}
                     className="h-full w-full object-cover transition group-hover:scale-105"
                   />
                 ) : (
                   <span className="text-xs text-slate-400">Photo 1</span>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100 print:hidden">
                   <ZoomIn className="text-white" size={20} />
                 </div>
               </div>
             </div>
 
             {/* Car Photo 2 */}
-            <div className="col-span-6 sm:col-span-4">
+            <div className="col-span-6 sm:col-span-4 print:col-span-4">
               <div
                 onClick={() =>
                   currentReport.carImages?.[1] &&
@@ -610,25 +948,32 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
               >
                 {currentReport.carImages?.[1] ? (
                   <img
-                    src={currentReport.carImages[1]}
+                    id="true-report-car-photo-1"
+                    src={carPhotosDataUrls[1] || getProxiedImageUrl(currentReport.carImages[1])}
+                    crossOrigin="anonymous"
+                    loading="eager"
+                    decoding="sync"
                     alt={`Photo 2 for ${chassis}`}
                     className="h-full w-full object-cover transition group-hover:scale-105"
                   />
                 ) : (
                   <span className="text-xs text-slate-400">Photo 2</span>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100 print:hidden">
                   <ZoomIn className="text-white" size={20} />
                 </div>
               </div>
             </div>
 
             {/* Live Verification QR Code */}
-            <div className="col-span-12 sm:col-span-4 flex flex-col items-center justify-center">
+            <div className="col-span-12 sm:col-span-4 print:col-span-4 flex flex-col items-center justify-center">
               <div className="flex flex-col items-center justify-center rounded border border-slate-300 bg-white p-2 shadow-xs">
                 {qrCodeDataUrl ? (
                   <img
+                    id="true-report-qr-img"
                     src={qrCodeDataUrl}
+                    loading="eager"
+                    decoding="sync"
                     alt="Scan to verify"
                     className="h-28 w-28 object-contain"
                   />
@@ -661,6 +1006,52 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Global Print Styles for Ctrl+P */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 5mm 6mm;
+          }
+          html, body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+          }
+          header, nav, footer, aside, .print\\:hidden, #__next-route-announcer__ {
+            display: none !important;
+          }
+          #true-report-sheet {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 4mm 6mm !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          #true-report-auction-sheet-img {
+            max-height: 400px !important;
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
+            display: block !important;
+            margin: 0 auto !important;
+          }
+        }
+      `}</style>
 
       {/* Image Lightbox Modal */}
       {activeModalImage && (
