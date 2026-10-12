@@ -75,11 +75,119 @@ function generateHash(value: string, hashKey: string): string {
   return hmac.digest('base64');
 }
 
+import { createOrder } from '@/lib/true-report/orders';
+
+function validateCoupon(code: string, basePrice: number = 500): { isValid: boolean; discount: number } {
+  if (!code) return { isValid: false, discount: 0 };
+  try {
+    const couponsPath = path.join(process.cwd(), 'coupons.json');
+    if (!fs.existsSync(couponsPath)) return { isValid: false, discount: 0 };
+    const raw = fs.readFileSync(couponsPath, 'utf8');
+    const coupons = JSON.parse(raw);
+    const found = coupons.find(
+      (c: any) => c.code?.toUpperCase() === code.trim().toUpperCase() && c.isActive
+    );
+    if (!found) return { isValid: false, discount: 0 };
+
+    let discount = 0;
+    if (found.discountType === 'percentage') {
+      discount = (basePrice * Number(found.discountAmount || 0)) / 100;
+    } else {
+      discount = Number(found.discountAmount || 0);
+    }
+    return { isValid: true, discount };
+  } catch {
+    return { isValid: false, discount: 0 };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { amount, chassis, name, email, mobileNumber, address } = body;
+    const {
+      amount,
+      chassis,
+      name,
+      email,
+      mobileNumber,
+      address,
+      couponCode,
+      discountAmount,
+      originalPrice,
+      reportKey,
+    } = body;
 
+    const cleanChassis = String(chassis || '').trim().toUpperCase();
+    if (!cleanChassis) {
+      return NextResponse.json(
+        { success: false, message: 'Chassis number is required' },
+        { status: 400 }
+      );
+    }
+
+    const orderId = `CCB_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carclickbd.com';
+    
+    const origPrice = Number(originalPrice) || 500;
+    let calculatedDiscount = 0;
+    let isCouponValid = false;
+
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      const couponCheck = validateCoupon(couponCode, origPrice);
+      if (couponCheck.isValid) {
+        isCouponValid = true;
+        calculatedDiscount = Math.min(origPrice, couponCheck.discount);
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'Invalid or expired coupon code' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Always compute final payable amount securely on the backend
+    const numAmount = Math.max(0, origPrice - calculatedDiscount);
+
+    // ── Handle 100% Free / Verified Coupon Order cleanly ─────────────────
+    if (numAmount <= 0) {
+      if (!isCouponValid) {
+        return NextResponse.json(
+          { success: false, message: 'Payment or a valid discount coupon is required.' },
+          { status: 400 }
+        );
+      }
+
+      // Record verified free/coupon order in database
+      createOrder({
+        orderId,
+        chassis: cleanChassis,
+        customerName: name || 'Guest User',
+        customerEmail: email || '',
+        customerPhone: mobileNumber || '',
+        customerAddress: address || '',
+        amount: 0,
+        originalPrice: origPrice,
+        discountAmount: calculatedDiscount,
+        couponCode: couponCode.trim().toUpperCase(),
+        paymentMethod: `Coupon (${couponCode.trim().toUpperCase()})`,
+        paymentStatus: 'PAID',
+        paymentVerified: true,
+        verificationSource: 'COUPON',
+        reportKey: reportKey || '',
+        downloadUrl: `${baseUrl}/auction-sheets?status=success&chassis=${encodeURIComponent(cleanChassis)}&order=${orderId}`,
+      });
+
+      return NextResponse.json({
+        success: true,
+        isFree: true,
+        data: {
+          orderId,
+          payment_url: `${baseUrl}/payments?status=success&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`,
+        },
+      });
+    }
+
+    // ── Handle EPS Gateway Payment ─────────────────────────────────────────
     const config = loadEpsConfig();
 
     if (!config.isActive) {
@@ -95,6 +203,25 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Record PENDING order in database before redirecting to payment gateway
+    createOrder({
+      orderId,
+      chassis: cleanChassis,
+      customerName: name || 'Guest User',
+      customerEmail: email || '',
+      customerPhone: mobileNumber || '',
+      customerAddress: address || '',
+      amount: numAmount,
+      originalPrice: origPrice,
+      discountAmount: calculatedDiscount,
+      couponCode: couponCode ? String(couponCode).trim().toUpperCase() : '',
+      paymentMethod: 'EPS',
+      paymentStatus: 'PENDING',
+      paymentVerified: false,
+      verificationSource: 'UNVERIFIED',
+      reportKey: reportKey || '',
+    });
 
     const isSandbox = config.isSandbox;
     const endpoints = {
@@ -118,6 +245,7 @@ export async function POST(request: Request) {
         },
         {
           headers: { 'x-hash': authHash },
+          timeout: 15000,
         }
       );
 
@@ -132,9 +260,6 @@ export async function POST(request: Request) {
     }
 
     // 2. Initialize Payment
-    const orderId = `CCB_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carclickbd.com';
-
     const initHash = generateHash(orderId, config.hashKey);
     const paymentParams = {
       merchantId: config.merchantId,
@@ -144,12 +269,12 @@ export async function POST(request: Request) {
       transactionTypeId: 1, // WEB
       financialEntityId: 0,
       transitionStatusId: 0,
-      totalAmount: Number(amount),
+      totalAmount: numAmount,
       ipAddress: '0.0.0.0',
       version: '1',
-      successUrl: `${baseUrl}/payments?status=success&type=auction-sheet&order=${orderId}${chassis ? `&chassis=${encodeURIComponent(chassis)}` : ''}`,
-      failUrl: `${baseUrl}/payments?status=fail&type=auction-sheet&order=${orderId}`,
-      cancelUrl: `${baseUrl}/payments?status=cancel&type=auction-sheet&order=${orderId}`,
+      successUrl: `${baseUrl}/payments?status=success&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`,
+      failUrl: `${baseUrl}/payments?status=fail&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`,
+      cancelUrl: `${baseUrl}/payments?status=cancel&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`,
       customerName: name || 'Guest User',
       customerEmail: email || 'no-email@example.com',
       CustomerAddress: address || 'Dhaka',
@@ -158,7 +283,7 @@ export async function POST(request: Request) {
       CustomerPostcode: '1000',
       CustomerCountry: 'BD',
       CustomerPhone: mobileNumber || '01700000000',
-      ProductName: chassis ? `Auction Sheet Verification - ${chassis}` : 'CarClickBD Service',
+      ProductName: `Auction Sheet Verification - ${cleanChassis}`,
       ProductCategory: 'Service',
       ProductProfile: 'general',
       ShippingMethod: 'NO',
@@ -171,6 +296,7 @@ export async function POST(request: Request) {
           'x-hash': initHash,
           Authorization: `Bearer ${token}`,
         },
+        timeout: 20000,
       });
 
       const initData = initRes.data;

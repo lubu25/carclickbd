@@ -60,6 +60,7 @@ const superRoutes: IDNavMenuItem[] = [
     children: [
       { label: "Orders", route: "/admin/order" },
       { label: "Payments", route: "/admin/payments" },
+      { label: "True Report Review", route: "/admin/true-reports" },
       { label: "Refunds", route: "/admin/refund" },
       { label: "Stock", route: "/admin/stock" },
     ],

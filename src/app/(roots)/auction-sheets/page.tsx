@@ -185,6 +185,7 @@ const AuctionSheetsPageContent = () => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponMessage, setCouponMessage] = useState({ text: '', type: '' });
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -219,11 +220,55 @@ const AuctionSheetsPageContent = () => {
     useInitBdGateAuctionSheetPaymentMutation();
   const [getAuctionSheetPaymentStatus, { data: paymentStatusResponse }] =
     useLazyGetBdGateAuctionSheetPaymentStatusQuery();
-  const isPurchasing = isCreatingOrder || isStartingPayment;
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+  const [hasVerifiedAccess, setHasVerifiedAccess] = useState(false);
+  const [verifiedOrderData, setVerifiedOrderData] = useState<any>(null);
 
-  const paymentStatus =
-    paymentStatusResponse?.data?.data || paymentStatusResponse?.data;
-  const isPaymentPaid = paymentStatus?.paid === true || statusParam === 'success';
+  // Strict Server-Side Verification for True Report Access
+  useEffect(() => {
+    const cleanChassis = chassis.trim().toUpperCase();
+    if (!cleanChassis) {
+      setIsCheckingAccess(false);
+      setHasVerifiedAccess(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCheckingAccess(true);
+
+    const checkAccess = async () => {
+      try {
+        const orderParam = searchParams.get('order') || searchParams.get('order_id') || '';
+        const params = new URLSearchParams({ chassis: cleanChassis });
+        if (orderParam) params.set('order', orderParam);
+
+        const res = await fetch(`/api/true-report/check-access?${params.toString()}`);
+        const accessData = await res.json();
+
+        if (!isMounted) return;
+
+        if (accessData.hasAccess) {
+          setHasVerifiedAccess(true);
+          setVerifiedOrderData(accessData.order);
+        } else {
+          setHasVerifiedAccess(false);
+        }
+      } catch (err) {
+        console.error('Failed to check report access:', err);
+        if (isMounted) setHasVerifiedAccess(false);
+      } finally {
+        if (isMounted) setIsCheckingAccess(false);
+      }
+    };
+
+    checkAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chassis, searchParams]);
+
+  const isPaymentPaid = hasVerifiedAccess;
 
   // Keep the existing purchase notification, after the original PDF is ready.
   const handleOriginalReportReady = useCallback(() => {
@@ -329,11 +374,13 @@ const AuctionSheetsPageContent = () => {
   const handlePurchaseSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPurchaseError('');
+    setIsPurchasing(true);
 
     const formData = new FormData(event.currentTarget);
     const cleanChassis = reportData?.chassis || chassis;
 
     if (!downloadAvailable && false) { // Bypassed for testing
+      setIsPurchasing(false);
       setPurchaseError(
         'JPCenter does not have a downloadable auction sheet for this chassis yet. No payment was started. Please contact CarClickBD for a manual review.',
       );
@@ -362,15 +409,7 @@ const AuctionSheetsPageContent = () => {
         }));
       }
 
-      // Bypass EPS Checkout if final amount is 0
-      if (finalAmount <= 0) {
-        const orderId = `TEST_${Date.now()}`;
-        window.location.assign(`/payments?status=success&type=auction-sheet&order=${orderId}&chassis=${encodeURIComponent(cleanChassis)}`);
-        return;
-      }
-
-      // Bypass the failing backend /auction-sheet/order endpoint
-      // and directly hit our Next.js API route to initiate EPS Checkout
+      // Initiate EPS Checkout or Verified Coupon Order through Next.js API route
       const response = await fetch('/api/eps/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -381,6 +420,10 @@ const AuctionSheetsPageContent = () => {
           mobileNumber,
           address,
           amount: finalAmount,
+          originalPrice: AUCTION_SHEET_PRICE,
+          discountAmount,
+          couponCode: couponCode.trim(),
+          reportKey: reportData?.firstKey || reportSource?.key || searchParams.get('key') || '',
           termsAccepted: formData.get('termsAccepted') === 'on',
         })
       });
@@ -388,19 +431,20 @@ const AuctionSheetsPageContent = () => {
       const paymentResponse = await response.json();
 
       if (!paymentResponse.success) {
-        throw new Error(paymentResponse.message || 'Failed to initiate EPS payment.');
+        throw new Error(paymentResponse.message || 'Failed to initiate payment.');
       }
 
       const paymentUrl = paymentResponse?.data?.payment_url;
 
       if (!paymentUrl) {
         throw new Error(
-          'BDGate did not return a payment URL. Please check the backend BDGate response.',
+          'Payment gateway did not return a valid redirect URL. Please check gateway settings.',
         );
       }
 
       window.location.assign(paymentUrl);
     } catch (error: any) {
+      setIsPurchasing(false);
       const message =
         error?.data?.message ||
         error?.message ||
@@ -465,7 +509,13 @@ const AuctionSheetsPageContent = () => {
             ) : (
               <div className="space-y-8">
                 <div className="space-y-4">
-                  {isPaymentPaid ? (
+                  {isCheckingAccess && (statusParam === 'success' || searchParams.get('order')) ? (
+                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                      <div className="w-10 h-10 border-4 border-[#2980b9] border-t-transparent rounded-full animate-spin" />
+                      <p className="text-base font-semibold text-slate-700">Verifying payment authorization with gateway...</p>
+                      <p className="text-xs text-slate-500">Please wait while we confirm your True Report order.</p>
+                    </div>
+                  ) : isPaymentPaid ? (
                     <div className="w-full">
                       <TrueReportViewer
                         chassis={chassis}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateTrueReportPdf } from "@/lib/pdf/generateTrueReportPdf";
+import { isChassisPaid } from "@/lib/true-report/orders";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -462,6 +463,16 @@ export async function GET(request: Request) {
       );
     }
     const chassis = rawChassis.toUpperCase();
+
+    // Check payment verification: require that this chassis has a verified paid order
+    const paid = isChassisPaid(chassis);
+    if (!paid && !searchParams.get("key") && process.env.NODE_ENV !== "development") {
+      throw new ReportError(
+        "Payment verification required to download this True Report PDF. Please complete payment first.",
+        403,
+        "PAYMENT_REQUIRED",
+      );
+    }
 
     // Check persistent cache first: If report was already fetched/paid, return instantly without re-querying provider
     const cached = getCachedReport(chassis);
