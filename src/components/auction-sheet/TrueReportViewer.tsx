@@ -1,19 +1,20 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
+import QRCode from "qrcode";
 import {
   Download,
   Printer,
+  Camera,
   ZoomIn,
   Languages,
   CheckCircle2,
-  Car,
-  FileText,
-  Info,
   X,
   AlertCircle,
   RefreshCw,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
 import { Spin, message } from "antd";
 import { getWhatsAppUrl } from "@/constants/siteContact";
@@ -52,37 +53,26 @@ export interface TrueReportViewerProps {
   onReady?: () => void;
 }
 
-const GLOSSARY_ITEMS = [
-  { code: "A1", desc: "Small Scratch" },
-  { code: "A2", desc: "Scratch" },
-  { code: "A3", desc: "Big Scratch" },
-  { code: "E1", desc: "Few Dimples" },
-  { code: "E2", desc: "Several Dimples" },
-  { code: "E3", desc: "Many Dimples" },
-  { code: "U1", desc: "Small Dent" },
-  { code: "U2", desc: "Dent" },
-  { code: "U3", desc: "Big Dent" },
-  { code: "W1", desc: "Repair Mark/Wave (hardly detectable)" },
-  { code: "W2", desc: "Repair Mark/Wave" },
-  { code: "W3", desc: "Obvious Repair Mark/Wave (needs repaint)" },
-  { code: "S1", desc: "Rust" },
-  { code: "S2", desc: "Heavy Rust" },
-  { code: "C1", desc: "Corrosion" },
-  { code: "C2", desc: "Heavy Corrosion (Need to be replaced)" },
-  { code: "XX", desc: "Replaced Panel/Part" },
-  { code: "B1", desc: "Distortion on core support or back panel (~thumb size)" },
-  { code: "B2", desc: "Big Distortion on core support or back panel" },
-  { code: "Y1", desc: "Small Hole or Crack" },
-  { code: "Y2", desc: "Hole or Crack" },
-  { code: "Y3", desc: "Big Hole or Crack" },
-  { code: "X1", desc: "Small Crack on Windshield (~1cm)" },
-  { code: "R", desc: "Repaired Crack on Windshield" },
-  { code: "RX", desc: "Repaired Crack on Windshield (needs replacement)" },
-  { code: "X", desc: "Crack on Windshield (needs replacement)" },
-  { code: "B", desc: "Dent with scratch" },
-  { code: "P", desc: "Paint marked" },
-  { code: "H", desc: "Paint faded" },
-  { code: "G", desc: "Stone chip in glass" },
+const EXPLANATIONS = [
+  { text: "A1 : Small Scratch | A2 : Scratch | A3 : Big Scratch" },
+  { text: "B1 : Small dent with scratch (size like a thumb)" },
+  { text: "B2 : Dent with scratch (size like flat of the hand)" },
+  { text: "B3 : Big Dent with scratch (size like elbow)" },
+  { text: "C1: Corrosion | C2: Heavy Corrosion" },
+  { text: "E1: Few Dimples | E2: Several Dimples" },
+  { text: "E3: Many Dimples | G: Chip In Glass" },
+  { text: "H: Paint faded | X: Need to be replaced" },
+  { text: "P: Paint Marked | R: Repaired Crack on Windshield" },
+  { text: "RX: Repaired Crack on Windshield (needs to be replaced)" },
+  { text: "S1: Rust | S2: Heavy Rust" },
+  { text: "U1: Small Dent | U2: Dent | U3: Big Dent" },
+  { text: "X: Crack on Windshield (needs to be replaced)" },
+  { text: "XX: Replaced" },
+  { text: "X1: Small Crack on Windshield (approximately 1cm)" },
+  { text: "W1: Repair Mark/Wave (hardly detectable )" },
+  { text: "W2: Repair Mark/Wave" },
+  { text: "W3: Obvious Repair Mark/Wave (needs to be repainted)" },
+  { text: "Y1: Small Hole or Crack | Y2: Hole or Crack | Y3: Big Hole or Crack" },
 ];
 
 export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
@@ -102,9 +92,21 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
   const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
   const [isTranslateModalOpen, setIsTranslateModalOpen] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
-  // Sync when initialReports change
+  // Generate QR Code linking to online verification report
+  useEffect(() => {
+    if (!chassis) return;
+    const url = `https://carclickbd.com/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
+    QRCode.toDataURL(url, { margin: 1, width: 256 })
+      .then(setQrCodeDataUrl)
+      .catch((err) => console.warn("Failed to generate QR Code:", err));
+  }, [chassis]);
+
+  // Sync when initialReports changes
   useEffect(() => {
     if (initialReports && initialReports.length > 0) {
       setReports(initialReports);
@@ -163,19 +165,20 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
   const currentReport = reports[selectedAuctionIndex] || reports[0] || {};
   const allReports = reports.length > 0 ? reports : [currentReport];
 
+  // 1. Download PDF Handler
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     message.loading({ content: "Preparing Official True Report PDF...", key: "pdf_dl" });
 
     try {
-      // 1. Try server download endpoint directly
+      // Direct server download
       const params = new URLSearchParams({ chassis });
       if (reportKey) params.set("key", reportKey);
       const res = await fetch(`/api/jpcenter/download?${params.toString()}`);
 
       if (res.ok) {
         const blob = await res.blob();
-        if (blob.size > 10000) {
+        if (blob.size > 15000) {
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
@@ -190,15 +193,15 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
         }
       }
 
-      // 2. Client-side fallback using jsPDF and html2canvas
+      // Fallback: html2canvas + jsPDF client-side generator
       const { default: jsPDF } = await import("jspdf");
       const { default: html2canvas } = await import("html2canvas");
 
       const element = reportContainerRef.current;
-      if (!element) throw new Error("Report view not available");
+      if (!element) throw new Error("Report element not found");
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -208,26 +211,13 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const totalPdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      let heightLeft = totalPdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, totalPdfHeight, undefined, "FAST");
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - totalPdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, totalPdfHeight, undefined, "FAST");
-        heightLeft -= pdfHeight;
-      }
-
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       pdf.save(`True-Report-${chassis}.pdf`);
       message.success({ content: "PDF generated and downloaded!", key: "pdf_dl" });
     } catch (err: any) {
-      console.error("PDF Download/Generation Error:", err);
+      console.error("PDF Download Error:", err);
       message.info({ content: "Opening print dialog as PDF fallback...", key: "pdf_dl" });
       window.print();
     } finally {
@@ -235,42 +225,69 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
     }
   };
 
+  // 2. Download Screenshot (Image) Handler
+  const handleDownloadScreenshot = async () => {
+    setIsCapturingScreenshot(true);
+    message.loading({ content: "Generating True Report screenshot...", key: "img_dl" });
+
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const element = reportContainerRef.current;
+      if (!element) throw new Error("Report element not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 3, // Ultra-high resolution crisp quality
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = imgData;
+      link.download = `True-Report-${chassis}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      message.success({ content: "Screenshot image downloaded successfully!", key: "img_dl" });
+    } catch (err: any) {
+      console.error("Screenshot Download Error:", err);
+      message.error({ content: "Could not generate screenshot image", key: "img_dl" });
+    } finally {
+      setIsCapturingScreenshot(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
 
-  const getSpecRows = (rep: AuctionReportItem) => [
-    { label: "Auction", value: rep.auction || "N/A" },
-    { label: "Auction date", value: rep.auctionDate || "N/A" },
-    { label: "Lot number", value: rep.lotNumber || "N/A" },
-    { label: "Chassis ID", value: rep.chassisId || rep.chassis || chassis },
-    { label: "Brand", value: rep.brand || rep.vendor || "TOYOTA" },
-    { label: "Model", value: rep.model || "N/A" },
-    { label: "Mileage", value: rep.mileage || "N/A" },
-    { label: "Engine CC", value: rep.engineCc ? `${rep.engineCc} cc` : "N/A" },
-    { label: "Year", value: rep.year || "N/A" },
-    { label: "Grade", value: rep.grade || "N/A" },
-    { label: "Equipment", value: rep.equipment || "AAC" },
-    { label: "Transmission", value: rep.transmission || "N/A" },
+  const specRows = [
+    { label: "Auction", value: currentReport.auction || "N/A" },
+    { label: "Auction date", value: currentReport.auctionDate || "N/A" },
+    { label: "Lot number", value: currentReport.lotNumber || "N/A" },
+    { label: "Frame", value: currentReport.chassisId || currentReport.chassis || chassis },
+    { label: "Vendor", value: currentReport.brand || currentReport.vendor || "TOYOTA" },
+    { label: "Model", value: currentReport.model || "N/A" },
+    { label: "Mileage", value: currentReport.mileage || "N/A" },
     {
-      label: "Start price",
-      value: rep.startPrice
-        ? rep.startPrice.includes("YEN") || rep.startPrice.includes("JPY")
-          ? rep.startPrice
-          : `${rep.startPrice} JPY`
-        : "0 JPY",
-    },
-    {
-      label: "Finish price",
-      value: rep.finishPrice
-        ? rep.finishPrice.includes("YEN") || rep.finishPrice.includes("JPY")
-          ? rep.finishPrice
-          : `${rep.finishPrice} JPY`
+      label: "Displacement",
+      value: currentReport.engineCc
+        ? `${currentReport.engineCc}`.includes("cc")
+          ? currentReport.engineCc
+          : `${currentReport.engineCc}`
         : "N/A",
     },
-    { label: "Color", value: rep.color || "N/A" },
-    { label: "Condition", value: rep.condition || "N/A" },
-    { label: "Status", value: rep.status || "N/A" },
+    { label: "Year", value: currentReport.year || "N/A" },
+    { label: "Grade", value: currentReport.grade || "N/A" },
+    { label: "Equipment", value: currentReport.equipment || "AAC" },
+    { label: "Transmission", value: currentReport.transmission || "N/A" },
+    { label: "Color", value: currentReport.color || "N/A" },
+    { label: "Score", value: currentReport.condition || "N/A" },
+    { label: "Status", value: (currentReport.status || "SOLD").toUpperCase() },
+    { label: "Powered By", value: "CARCLICK BD", isBrand: true },
   ];
 
   if (isLoading) {
@@ -284,7 +301,7 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           Loading Official Japanese True Report...
         </p>
         <p className="max-w-md text-sm font-semibold text-slate-600">
-          Retrieving authentic Japanese auction inspection sheet, high-definition car photos, and verified inspection data for Chassis {chassis}
+          Retrieving authentic Japanese auction inspection sheet, vehicle photos, and verified inspection data for Chassis {chassis}
         </p>
       </div>
     );
@@ -348,7 +365,7 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Multiple Auction Run Navigation */}
           {allReports.length > 1 && (
             <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
@@ -368,284 +385,279 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
             </div>
           )}
 
+          {/* Download Official PDF */}
           <button
             onClick={handleDownloadPdf}
             disabled={isDownloadingPdf}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#f5bd05] px-5 py-3 text-sm font-black text-slate-950 shadow-md transition hover:bg-[#dfaa00] hover:shadow-lg disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#f5bd05] px-4 py-2.5 text-xs font-black text-slate-950 shadow-md transition hover:bg-[#dfaa00] hover:shadow-lg disabled:opacity-50"
           >
-            {isDownloadingPdf ? <Spin size="small" /> : <Download size={18} />}
+            {isDownloadingPdf ? <Spin size="small" /> : <Download size={16} />}
             Download Official PDF
           </button>
 
+          {/* Download Screenshot / Image */}
+          <button
+            onClick={handleDownloadScreenshot}
+            disabled={isCapturingScreenshot}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#003399] px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-[#002675] hover:shadow-lg disabled:opacity-50"
+          >
+            {isCapturingScreenshot ? <Spin size="small" /> : <Camera size={16} />}
+            স্ক্রিনশট ডাউনলোড
+          </button>
+
+          {/* Print Button */}
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-xl border-2 border-[#003399] bg-white px-5 py-3 text-sm font-bold text-[#003399] shadow-sm transition hover:bg-blue-50"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
           >
-            <Printer size={18} />
-            Print / Fullscreen
+            <Printer size={16} />
+            Print
           </button>
         </div>
       </div>
 
-      {/* Trust & Bank Notice Box */}
-      <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs font-medium text-emerald-900 print:hidden">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={18} />
-        <div className="space-y-0.5">
-          <p className="font-bold">
-            100% Unaltered Japanese Auction Record &bull; Original Sheet & Photos
-          </p>
-          <p className="text-emerald-800">
-            This authentic document contains the complete vehicle inspection diagram, inspector notes, high-definition car yard photos, and condition grades. It is completely untouched and accepted by banks for car loans and customs verification.
-          </p>
-        </div>
-      </div>
-
-      {/* Main Printable / Renderable Container */}
-      <div
-        ref={reportContainerRef}
-        id="true-report-printable"
-        className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-[#fdfbf7] p-6 shadow-xl sm:p-10 print:border-none print:p-0 print:shadow-none"
-      >
-        {/* Document Header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-            <span className="rounded bg-slate-200 px-2 py-0.5 text-slate-800">START</span>
-            <span>&bull;</span>
-            <span>SAVED</span>
-            <span>&bull;</span>
-            <span>SAMPLE</span>
-            <span>&bull;</span>
-            <span>BALANCE</span>
-            <span>&bull;</span>
-            <span>MANUAL</span>
-            <span>&bull;</span>
-            <span className="font-extrabold text-[#003399]">REPORT+</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-            <span>ORDER {chassis}</span>
-            <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-black text-white">
-              VERIFIED
-            </span>
-          </div>
-        </div>
-
-        {/* Render Each Auction Record */}
-        {allReports.map((rep, rIndex) => {
-          const specRows = getSpecRows(rep);
-          const hasMultipleAuctions = allReports.length > 1;
-
-          return (
-            <div
-              key={rIndex}
-              className={`mb-12 ${
-                hasMultipleAuctions && selectedAuctionIndex !== rIndex
-                  ? "hidden print:block print:break-before-page"
-                  : ""
-              }`}
-            >
-              {/* True Report Ribbon Badge Banner */}
-              <div className="mb-6 flex items-center justify-between overflow-hidden rounded-xl bg-gradient-to-r from-[#0d47a1] to-[#1565c0] p-4 text-white shadow-md">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-2xl font-black">
-                    {rIndex + 1}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black tracking-wider uppercase sm:text-3xl">
-                      TRUE REPORT
-                    </h2>
-                    <p className="text-sm font-semibold tracking-wide text-blue-100">
-                      CHASSIS ID: <span className="font-bold text-amber-300">{rep.chassis || chassis}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-xs uppercase tracking-wider text-blue-200">Auction House</p>
-                  <p className="text-lg font-black text-white">{rep.auction || "TAA / USS"}</p>
-                  <p className="text-xs text-blue-200">{rep.auctionDate}</p>
-                </div>
-              </div>
-
-              {/* Top Section: Specifications Table */}
-              <div className="mb-8 overflow-hidden rounded-2xl border-2 border-[#1565c0]/30 bg-white shadow-sm">
-                <div className="border-b border-slate-200 bg-slate-50 px-5 py-3">
-                  <p className="text-xs font-black uppercase tracking-wider text-[#003399]">
-                    Vehicle Inspection & Auction Specifications (Run {rIndex + 1} of {allReports.length})
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-                  <div className="divide-y divide-slate-100">
-                    {specRows.slice(0, 8).map((row, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center justify-between px-5 py-2.5 text-sm ${
-                          i % 2 === 0 ? "bg-slate-50/60" : "bg-white"
-                        }`}
-                      >
-                        <span className="font-semibold text-slate-600">{row.label}</span>
-                        <span className="font-extrabold uppercase text-slate-900">
-                          {row.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="divide-y divide-slate-100">
-                    {specRows.slice(8).map((row, i) => (
-                      <div
-                        key={i}
-                        className={`flex items-center justify-between px-5 py-2.5 text-sm ${
-                          i % 2 === 0 ? "bg-slate-50/60" : "bg-white"
-                        }`}
-                      >
-                        <span className="font-semibold text-slate-600">{row.label}</span>
-                        <span
-                          className={`font-extrabold uppercase ${
-                            row.label === "Status"
-                              ? row.value.toLowerCase() === "sold"
-                                ? "text-emerald-600"
-                                : "text-amber-600"
-                              : row.label === "Finish price"
-                              ? "text-[#003399]"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          {row.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Middle Section: Auction Sheet (Left) + Vehicle Photos Grid (Right) */}
-              <div className="mb-8 grid gap-6 lg:grid-cols-12">
-                {/* Left: Japanese Auction Sheet */}
-                <div className="flex flex-col lg:col-span-6 xl:col-span-5">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Japanese Auction Sheet
-                    </p>
-                    {rep.auctionSheetImage && (
-                      <button
-                        onClick={() => setActiveModalImage(rep.auctionSheetImage!)}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#003399] hover:underline"
-                      >
-                        <ZoomIn size={13} /> Full Screen
-                      </button>
-                    )}
-                  </div>
-
-                  <div
-                    onClick={() => rep.auctionSheetImage && setActiveModalImage(rep.auctionSheetImage)}
-                    className="relative flex min-h-[380px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-300 bg-white p-2 shadow-sm transition hover:border-[#003399]"
-                  >
-                    {rep.auctionSheetImage ? (
-                      <img
-                        src={rep.auctionSheetImage}
-                        alt={`Auction sheet for ${chassis}`}
-                        className="max-h-[500px] w-full object-contain"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 p-8 text-center text-slate-400">
-                        <FileText size={48} />
-                        <p className="text-sm font-bold">Auction Sheet Image Processing</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Translate to English Button */}
-                  <button
-                    onClick={() => setIsTranslateModalOpen(true)}
-                    className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#003399] px-4 text-xs font-black text-white shadow-md transition hover:bg-[#00266f]"
-                  >
-                    <Languages size={16} />
-                    Translate Sheet to English
-                  </button>
-                </div>
-
-                {/* Right: Vehicle Inspection Photos Grid */}
-                <div className="flex flex-col lg:col-span-6 xl:col-span-7">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-black uppercase tracking-wider text-slate-500">
-                      Vehicle Yard Photos ({rep.carImages?.length || 0})
-                    </p>
-                    <span className="text-xs text-slate-400">High-Resolution Originals</span>
-                  </div>
-
-                  {rep.carImages && rep.carImages.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-                      {rep.carImages.map((imgUrl, pIdx) => (
-                        <div
-                          key={pIdx}
-                          onClick={() => setActiveModalImage(imgUrl)}
-                          className="group relative flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-[#003399]"
-                        >
-                          <img
-                            src={imgUrl}
-                            alt={`Car photo ${pIdx + 1} for ${chassis}`}
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
-                            <ZoomIn className="text-white" size={24} />
-                          </div>
-                          <div className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                            Photo {pIdx + 1}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex min-h-[380px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-400">
-                      <Car size={48} />
-                      <p className="mt-2 text-sm font-bold">No additional photos attached to this lot</p>
-                      <p className="text-xs text-slate-400">All condition details are captured on the auction sheet</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+      {/* ============================================================== */}
+      {/* EXACT 1-PAGE TRUE REPORT CONTAINER (MATCHING USER SAMPLE PDF) */}
+      {/* ============================================================== */}
+      <div className="flex justify-center overflow-x-auto py-2">
+        <div
+          ref={reportContainerRef}
+          id="true-report-sheet"
+          className="w-full max-w-[850px] bg-white p-6 sm:p-8 border border-slate-300 shadow-2xl rounded-lg text-slate-900 select-text print:border-none print:shadow-none print:p-4 print:max-w-none"
+          style={{ minHeight: "1150px" }}
+        >
+          {/* 1. TOP HEADER */}
+          <div className="flex items-center justify-between pb-3">
+            {/* Left: CarClick BD Logo */}
+            <div className="relative h-12 w-48 sm:h-14 sm:w-56 shrink-0">
+              <img
+                src="/assets/logo.png"
+                alt="CarClick BD"
+                className="h-full w-full object-contain object-left"
+              />
             </div>
-          );
-        })}
 
-        {/* Bottom Section: Auction List Explanation & Glossary */}
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm print:break-before-page">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
-            <div>
-              <h3 className="text-lg font-black text-slate-900">
-                Auction List Explanation & Condition Guide
-              </h3>
-              <p className="text-xs text-slate-500">
-                Official Japanese car auction inspection marks and abbreviation guide
-              </p>
-            </div>
-            <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#003399]">
-              Verified Guide
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-            {GLOSSARY_ITEMS.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2 rounded-lg bg-slate-50 p-2.5 text-xs transition hover:bg-blue-50/50"
+            {/* Right: Red Serif Title */}
+            <div className="text-right">
+              <h1
+                className="font-serif italic font-extrabold tracking-tight text-[#c00000]"
+                style={{ fontSize: "1.45rem" }}
               >
-                <span className="flex h-6 min-w-6 items-center justify-center rounded bg-[#003399] font-black text-white">
-                  {item.code}
-                </span>
-                <span className="font-semibold text-slate-700">{item.desc}</span>
-              </div>
-            ))}
+                True Report of {chassis}
+              </h1>
+            </div>
           </div>
 
-          {/* Official Verification Footer */}
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4 text-xs text-slate-500">
-            <div>
-              <p className="font-bold text-slate-800">CarClickBD True Report Verification</p>
-              <p>Generated directly from official Japanese auction database for Chassis {chassis}</p>
+          {/* 2. THREE-COLUMN MAIN GRID */}
+          <div className="grid grid-cols-12 gap-3.5 pt-2">
+            {/* COLUMN 1: LEFT SPECIFICATIONS TABLE (3.5 cols) */}
+            <div className="col-span-12 sm:col-span-4 flex flex-col">
+              {/* Amber Box Header */}
+              <div className="bg-[#b26610] text-white text-center py-2 px-1 rounded-t shadow-sm">
+                <h2 className="font-serif font-bold text-base tracking-wider uppercase">
+                  TRUE REPORT
+                </h2>
+                <p className="font-sans font-bold text-xs tracking-wide text-amber-100">
+                  {chassis}
+                </p>
+              </div>
+
+              {/* Specs Table Rows */}
+              <div className="border border-slate-200 border-t-0 rounded-b overflow-hidden shadow-xs divide-y divide-slate-200 text-[11px]">
+                {specRows.map((row, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between px-2.5 py-1.5 ${
+                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
+                    }`}
+                  >
+                    <span className="font-medium text-slate-600">{row.label}</span>
+                    <span
+                      className={`font-bold ${
+                        row.isBrand
+                          ? "text-[#c00000] font-black tracking-wide"
+                          : row.label === "Status" && row.value.toLowerCase() === "sold"
+                          ? "text-emerald-700"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-2 font-bold text-emerald-700">
-              <CheckCircle2 size={16} /> Official CarClickBD Verified Document
+
+            {/* COLUMN 2: CENTER - ORIGINAL JAPANESE AUCTION SHEET (4.8 cols) */}
+            <div className="col-span-12 sm:col-span-5 flex flex-col">
+              <div
+                onClick={() =>
+                  currentReport.auctionSheetImage &&
+                  setActiveModalImage(currentReport.auctionSheetImage)
+                }
+                className="relative flex h-full min-h-[350px] w-full cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 bg-white p-1 shadow-xs transition hover:border-[#003399]"
+                title="Click to view full screen"
+              >
+                {currentReport.auctionSheetImage ? (
+                  <img
+                    src={currentReport.auctionSheetImage}
+                    alt={`Auction sheet for ${chassis}`}
+                    className="h-full w-full object-contain"
+                    style={{ maxHeight: "420px" }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-8 text-center text-slate-400">
+                    <FileText size={44} />
+                    <p className="text-xs font-bold">Auction Sheet Image Processing</p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* COLUMN 3: RIGHT - AUCTION SHEET EXPLANATION (3.7 cols) */}
+            <div className="col-span-12 sm:col-span-3 flex flex-col">
+              <div className="border-b border-slate-800 pb-1 mb-2">
+                <h3 className="font-serif italic font-bold text-xs sm:text-sm text-slate-900">
+                  Auction Sheet Explanation
+                </h3>
+              </div>
+
+              <div className="space-y-1 text-[9.5px] leading-tight text-slate-800">
+                {EXPLANATIONS.map((item, idx) => {
+                  if (item.text.includes("|")) {
+                    const parts = item.text.split("|");
+                    return (
+                      <p key={idx} className="leading-tight">
+                        {parts.map((p, pIdx) => {
+                          const seg = p.trim();
+                          const colonIdx = seg.indexOf(":");
+                          return (
+                            <React.Fragment key={pIdx}>
+                              {colonIdx !== -1 ? (
+                                <>
+                                  <strong className="text-[#c00000]">
+                                    {seg.substring(0, colonIdx + 1)}
+                                  </strong>
+                                  <span>{seg.substring(colonIdx + 1)}</span>
+                                </>
+                              ) : (
+                                <span>{seg}</span>
+                              )}
+                              {pIdx < parts.length - 1 && (
+                                <span className="text-slate-400 font-normal"> | </span>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </p>
+                    );
+                  }
+
+                  const colonIdx = item.text.indexOf(":");
+                  return (
+                    <p key={idx} className="leading-tight">
+                      {colonIdx !== -1 ? (
+                        <>
+                          <strong className="text-[#c00000]">
+                            {item.text.substring(0, colonIdx + 1)}
+                          </strong>
+                          <span>{item.text.substring(colonIdx + 1)}</span>
+                        </>
+                      ) : (
+                        <span>{item.text}</span>
+                      )}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. BOTTOM SECTION: CAR PHOTOS & QR CODE */}
+          <div className="grid grid-cols-12 gap-3.5 pt-4">
+            {/* Car Photo 1 */}
+            <div className="col-span-6 sm:col-span-4">
+              <div
+                onClick={() =>
+                  currentReport.carImages?.[0] &&
+                  setActiveModalImage(currentReport.carImages[0])
+                }
+                className="group relative flex aspect-[4/3] w-full cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 bg-slate-50 transition hover:border-[#003399]"
+              >
+                {currentReport.carImages?.[0] ? (
+                  <img
+                    src={currentReport.carImages[0]}
+                    alt={`Photo 1 for ${chassis}`}
+                    className="h-full w-full object-cover transition group-hover:scale-105"
+                  />
+                ) : (
+                  <span className="text-xs text-slate-400">Photo 1</span>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100">
+                  <ZoomIn className="text-white" size={20} />
+                </div>
+              </div>
+            </div>
+
+            {/* Car Photo 2 */}
+            <div className="col-span-6 sm:col-span-4">
+              <div
+                onClick={() =>
+                  currentReport.carImages?.[1] &&
+                  setActiveModalImage(currentReport.carImages[1])
+                }
+                className="group relative flex aspect-[4/3] w-full cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 bg-slate-50 transition hover:border-[#003399]"
+              >
+                {currentReport.carImages?.[1] ? (
+                  <img
+                    src={currentReport.carImages[1]}
+                    alt={`Photo 2 for ${chassis}`}
+                    className="h-full w-full object-cover transition group-hover:scale-105"
+                  />
+                ) : (
+                  <span className="text-xs text-slate-400">Photo 2</span>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition group-hover:opacity-100">
+                  <ZoomIn className="text-white" size={20} />
+                </div>
+              </div>
+            </div>
+
+            {/* Live Verification QR Code */}
+            <div className="col-span-12 sm:col-span-4 flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center rounded border border-slate-300 bg-white p-2 shadow-xs">
+                {qrCodeDataUrl ? (
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="Scan to verify"
+                    className="h-28 w-28 object-contain"
+                  />
+                ) : (
+                  <div className="h-28 w-28 bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
+                    QR Code
+                  </div>
+                )}
+                <span className="mt-1 text-[9px] font-bold text-slate-600">
+                  Scan to Verify Online
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. FOOTER (Red divider line & CarClick BD link) */}
+          <div className="mt-6 pt-3 border-t-2 border-[#c00000] flex items-center justify-between text-xs">
+            <p className="font-bold text-[#c00000]">
+              A product by{" "}
+              <a
+                href="https://carclickbd.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:opacity-80"
+              >
+                https://carclickbd.com/
+              </a>
+            </p>
+            <p className="font-serif italic text-slate-700">Page 1 of 1</p>
           </div>
         </div>
       </div>
@@ -701,57 +713,40 @@ export const TrueReportViewer: React.FC<TrueReportViewerProps> = ({
               <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                 <p className="text-xs font-black uppercase text-[#003399]">Vehicle Summary</p>
                 <p className="mt-1 text-base font-bold text-slate-900">
-                  {currentReport.brand} {currentReport.model} &bull; Year {currentReport.year} &bull; Grade {currentReport.grade}
+                  {currentReport.brand || currentReport.vendor} {currentReport.model} &bull; Year{" "}
+                  {currentReport.year} &bull; Grade {currentReport.grade}
                 </p>
                 <p className="text-xs text-slate-600">
-                  Mileage: {currentReport.mileage || "N/A"} &bull; Transmission: {currentReport.transmission || "N/A"}
+                  Mileage: {currentReport.mileage || "N/A"} &bull; Transmission:{" "}
+                  {currentReport.transmission || "N/A"}
                 </p>
               </div>
 
               <div>
                 <p className="font-bold text-slate-800">Inspection Grade Evaluation:</p>
                 <p className="mt-1 text-slate-600">
-                  Overall Grade: <strong className="text-slate-900">{currentReport.grade || "N/A"}</strong> ({
-                    currentReport.grade === "R"
-                      ? "Repaired / Past accident history evaluated by auction house"
-                      : currentReport.grade === "5" || currentReport.grade === "4.5"
-                      ? "Like-new to very high condition vehicle"
-                      : currentReport.grade === "4"
-                      ? "Clean condition with minor normal wear"
-                      : "Standard auction condition"
-                  })
+                  Overall Grade: <strong className="text-slate-900">{currentReport.grade || "N/A"}</strong>
                 </p>
               </div>
 
-              <div>
-                <p className="font-bold text-slate-800">Key Inspector Points:</p>
-                <ul className="mt-1 list-inside list-disc space-y-1 text-slate-600">
-                  <li>Body inspection points follow the standard Japanese map markings (A=Scratch, U=Dent, W=Repair).</li>
-                  <li>Equipment includes: {currentReport.equipment || "Standard AAC, Power Windows, ABS"}.</li>
-                  <li>Final auction status: <strong className="uppercase text-slate-900">{currentReport.status || "Finished"}</strong>.</li>
-                </ul>
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-3">
+                <a
+                  href={getWhatsAppUrl(
+                    `Hello CarClickBD, I need dedicated Japanese auction sheet translation for chassis ${chassis}.`
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 text-xs font-bold text-white transition hover:bg-[#20bd5a]"
+                >
+                  WhatsApp Support
+                </a>
+                <button
+                  onClick={() => setIsTranslateModalOpen(false)}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-100 px-5 text-xs font-bold text-slate-700 hover:bg-slate-200"
+                >
+                  Close
+                </button>
               </div>
-
-              <div className="rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-800">
-                <Info size={16} className="mb-1 inline" /> Need a line-by-line handwritten kanji translation from our bilingual inspector? Contact our team on WhatsApp for dedicated translation support.
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-3">
-              <a
-                href={getWhatsAppUrl(`Hello CarClickBD, I need dedicated Japanese auction sheet translation for chassis ${chassis}.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 text-xs font-bold text-white transition hover:bg-[#20bd5a]"
-              >
-                WhatsApp Support
-              </a>
-              <button
-                onClick={() => setIsTranslateModalOpen(false)}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-100 px-5 text-xs font-bold text-slate-700 hover:bg-slate-200"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>

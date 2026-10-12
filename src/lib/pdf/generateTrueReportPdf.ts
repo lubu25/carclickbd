@@ -1,4 +1,7 @@
 import { jsPDF } from "jspdf";
+import QRCode from "qrcode";
+import fs from "fs";
+import path from "path";
 
 export interface TrueReportPdfData {
   lotNumber?: string;
@@ -26,9 +29,9 @@ export interface TrueReportPdfData {
   carImages?: string[];
 }
 
-async function fetchImageBase64(
+async function fetchImageBuffer(
   url: string,
-): Promise<{ base64: string; format: "JPEG" | "PNG" } | null> {
+): Promise<{ buffer: Buffer; format: "JPEG" | "PNG" } | null> {
   if (!url || !url.startsWith("http")) return null;
   try {
     const res = await fetch(url, {
@@ -42,7 +45,7 @@ async function fetchImageBase64(
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length < 500) return null;
     return {
-      base64: buf.toString("base64"),
+      buffer: buf,
       format: url.toLowerCase().includes(".png") ? "PNG" : "JPEG",
     };
   } catch {
@@ -50,285 +53,308 @@ async function fetchImageBase64(
   }
 }
 
+function getLocalLogoDataUrl(): string | null {
+  try {
+    const candidates = [
+      path.join(process.cwd(), "public", "assets", "logo.png"),
+      path.join(process.cwd(), "src", "assets", "logo.png"),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const buf = fs.readFileSync(p);
+        return `data:image/png;base64,${buf.toString("base64")}`;
+      }
+    }
+  } catch {}
+  return null;
+}
+
 export async function generateTrueReportPdf(
   data: TrueReportPdfData,
   chassis: string,
 ): Promise<Uint8Array> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
 
-  // ==========================================
-  // PAGE 1: Header + Specifications + Auction Sheet
-  // ==========================================
-  doc.setFillColor(0, 51, 153); // #003399
-  doc.rect(0, 0, pageWidth, 22, "F");
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(13);
-  doc.setFont("helvetica", "bold");
-  doc.text("CARCLICKBD • OFFICIAL JAPANESE AUCTION TRUE REPORT", 12, 10);
-
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text(
-    `CHASSIS: ${chassis}  |  ORDER VERIFIED  |  BANK & CUSTOMS CERTIFIED`,
-    12,
-    16,
-  );
-
-  // Specifications Box
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(10, 26, pageWidth - 20, 38, 2, 2, "FD");
-
-  const specs: [string, string][] = [
-    ["Chassis ID", chassis],
-    ["Make / Vendor", data.brand || data.vendor || "TOYOTA"],
-    ["Model", data.model || "N/A"],
-    ["Year", data.year || "N/A"],
-    ["Grade", data.grade || "N/A"],
-    ["Mileage", data.mileage || "N/A"],
-    ["Engine CC", data.engineCc ? `${data.engineCc} cc` : "N/A"],
-    ["Transmission", data.transmission || "N/A"],
-    ["Auction House", data.auction || "TAA / USS"],
-    ["Auction Date", data.auctionDate || "N/A"],
-    ["Lot Number", data.lotNumber || "N/A"],
-    ["Overall Grade", data.condition || "N/A"],
-    ["Start Price", data.startPrice || "0 JPY"],
-    ["Finish Price", data.finishPrice || "N/A"],
-    ["Color", data.color || "N/A"],
-    ["Status", (data.status || "SOLD").toUpperCase()],
-  ];
-
-  doc.setFontSize(7.5);
-  const col1X = 14;
-  const col2X = 62;
-  const col3X = 110;
-  const col4X = 158;
-
-  for (let i = 0; i < 4; i++) {
-    const y = 32 + i * 7;
-    // Col 1
-    const s1 = specs[i];
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text(s1[0] + ":", col1X, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text(s1[1], col1X + 22, y);
-
-    // Col 2
-    const s2 = specs[i + 4];
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text(s2[0] + ":", col2X, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text(s2[1], col2X + 22, y);
-
-    // Col 3
-    const s3 = specs[i + 8];
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text(s3[0] + ":", col3X, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text(s3[1], col3X + 22, y);
-
-    // Col 4
-    const s4 = specs[i + 12];
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(100, 116, 139);
-    doc.text(s4[0] + ":", col4X, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(
-      s4[0] === "Status" ? 16 : 15,
-      s4[0] === "Status" ? 149 : 23,
-      s4[0] === "Status" ? 71 : 42,
-    );
-    doc.text(s4[1], col4X + 20, y);
+  // Generate QR Code linking to online verification report
+  const qrTargetUrl = `https://carclickbd.com/auction-sheets?status=success&chassis=${encodeURIComponent(chassis)}`;
+  let qrDataUrl = "";
+  try {
+    qrDataUrl = await QRCode.toDataURL(qrTargetUrl, { margin: 1, width: 256 });
+  } catch (err) {
+    console.warn("Could not generate QR code:", err);
   }
 
-  // Section title for Auction Sheet
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 51, 153);
-  doc.text(
-    "AUTHENTIC JAPANESE AUCTION INSPECTION SHEET (ORIGINAL DIAGRAM):",
-    12,
-    69,
-  );
-
-  // Embed sheet image
-  if (data.auctionSheetImage) {
-    const sheetImg = await fetchImageBase64(data.auctionSheetImage);
-    if (sheetImg) {
-      doc.addImage(
-        `data:image/jpeg;base64,${sheetImg.base64}`,
-        sheetImg.format,
-        10,
-        72,
-        pageWidth - 20,
-        214,
-        undefined,
-        "FAST",
-      );
-    }
+  // 1. TOP HEADER (Logo on left, Red Title on right)
+  const logoDataUrl = getLocalLogoDataUrl();
+  if (logoDataUrl) {
+    doc.addImage(logoDataUrl, "PNG", 10, 8, 48, 14, undefined, "FAST");
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(192, 0, 0);
+    doc.text("CarClick BD", 10, 18);
   }
 
-  // ==========================================
-  // PAGE 2: Vehicle Inspection Photos
-  // ==========================================
-  if (data.carImages && data.carImages.length > 0) {
-    doc.addPage();
-    doc.setFillColor(0, 51, 153);
-    doc.rect(0, 0, pageWidth, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`VEHICLE INSPECTION PHOTOS • CHASSIS: ${chassis}`, 12, 12);
-
-    const validImages: { base64: string; format: "JPEG" | "PNG" }[] = [];
-    for (const url of data.carImages.slice(0, 6)) {
-      const img = await fetchImageBase64(url);
-      if (img) validImages.push(img);
-    }
-
-    if (validImages.length === 1) {
-      doc.addImage(
-        `data:image/jpeg;base64,${validImages[0].base64}`,
-        validImages[0].format,
-        15,
-        30,
-        pageWidth - 30,
-        140,
-        undefined,
-        "FAST",
-      );
-    } else if (validImages.length >= 2) {
-      const imgWidth = (pageWidth - 30) / 2;
-      const imgHeight = 70;
-      validImages.forEach((img, idx) => {
-        const col = idx % 2;
-        const row = Math.floor(idx / 2);
-        const x = 12 + col * (imgWidth + 6);
-        const y = 30 + row * (imgHeight + 10);
-        doc.addImage(
-          `data:image/jpeg;base64,${img.base64}`,
-          img.format,
-          x,
-          y,
-          imgWidth,
-          imgHeight,
-          undefined,
-          "FAST",
-        );
-        doc.setFontSize(7.5);
-        doc.setTextColor(100, 116, 139);
-        doc.text(
-          `Vehicle Inspection Photo ${idx + 1}`,
-          x + 2,
-          y + imgHeight + 5,
-        );
-      });
-    }
-  }
-
-  // ==========================================
-  // PAGE 3: Japanese Auction Sheet Glossary & Official Bank Certificate
-  // ==========================================
-  doc.addPage();
-  doc.setFillColor(0, 51, 153);
-  doc.rect(0, 0, pageWidth, 20, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("JAPANESE AUCTION SHEET MARKINGS & CONDITION GUIDE", 12, 12);
-
-  const GLOSSARY = [
-    { code: "A1", desc: "Small Scratch" },
-    { code: "A2", desc: "Scratch" },
-    { code: "A3", desc: "Big Scratch" },
-    { code: "U1", desc: "Small Dent" },
-    { code: "U2", desc: "Dent" },
-    { code: "U3", desc: "Big Dent" },
-    { code: "W1", desc: "Minor Repair (hardly detectable)" },
-    { code: "W2", desc: "Repair Mark / Wave" },
-    { code: "W3", desc: "Obvious Repair Wave" },
-    { code: "S1", desc: "Rust" },
-    { code: "S2", desc: "Heavy Rust" },
-    { code: "C1", desc: "Corrosion" },
-    { code: "C2", desc: "Heavy Corrosion" },
-    { code: "XX", desc: "Replaced Panel / Part" },
-    { code: "X1", desc: "Small Windshield Crack (~1cm)" },
-    { code: "X", desc: "Windshield Crack (needs replacement)" },
-    { code: "B", desc: "Dent with scratch" },
-    { code: "P", desc: "Paint marked" },
-    { code: "H", desc: "Paint faded" },
-    { code: "G", desc: "Stone chip in glass" },
-  ];
-
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(10, 28, pageWidth - 20, 110, 2, 2, "FD");
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 51, 153);
-  doc.text("Standard Japanese Auction Inspection Symbols & Meanings:", 14, 36);
-
-  GLOSSARY.forEach((item, idx) => {
-    const col = idx % 2;
-    const row = Math.floor(idx / 2);
-    const x = 16 + col * 90;
-    const y = 44 + row * 9;
-
-    doc.setFillColor(0, 51, 153);
-    doc.roundedRect(x, y - 4, 8, 5.5, 1, 1, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "bold");
-    doc.text(item.code, x + 1.5, y);
-
-    doc.setTextColor(30, 41, 59);
-    doc.setFont("helvetica", "normal");
-    doc.text(item.desc, x + 11, y);
+  doc.setFont("times", "bolditalic");
+  doc.setFontSize(15);
+  doc.setTextColor(192, 0, 0); // #c00000 red
+  doc.text(`True Report of ${chassis}`, pageWidth - 10, 18, {
+    align: "right",
   });
 
-  // Official Certificate Notice
-  doc.setFillColor(236, 253, 245); // emerald-50
-  doc.setDrawColor(167, 243, 208); // emerald-200
-  doc.roundedRect(10, 146, pageWidth - 20, 45, 2, 2, "FD");
+  // 2. LEFT COLUMN: Specifications Table (x=10, width=54)
+  const leftX = 10;
+  const leftW = 54;
 
-  doc.setFontSize(10);
+  // Header Box
+  doc.setFillColor(178, 102, 16); // #b26610 (Amber / Golden Brown)
+  doc.rect(leftX, 26, leftW, 13, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("times", "bold");
+  doc.setFontSize(11);
+  doc.text("TRUE REPORT", leftX + leftW / 2, 32, { align: "center" });
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(6, 95, 70); // emerald-800
-  doc.text("100% AUTHENTIC JAPANESE VEHICLE VERIFICATION DOCUMENT", 16, 156);
-
   doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(4, 120, 87);
-  doc.text(
-    `This report has been compiled from direct Japanese auction database records for Chassis ID: ${chassis}.`,
-    16,
-    163,
-  );
-  doc.text(
-    "All inspection diagram marks, inspector comments, and auction results are authentic and unmodified.",
-    16,
-    169,
-  );
-  doc.text(
-    "This document is recognized and accepted by banks, financial institutions, and BRTA customs clearance in Bangladesh.",
-    16,
-    175,
-  );
+  doc.text(chassis, leftX + leftW / 2, 37, { align: "center" });
+
+  const specsRows: [string, string][] = [
+    ["Auction", data.auction || "N/A"],
+    ["Auction date", data.auctionDate || "N/A"],
+    ["Lot number", data.lotNumber || "N/A"],
+    ["Frame", data.chassisId || chassis],
+    ["Vendor", data.brand || data.vendor || "TOYOTA"],
+    ["Model", data.model || "N/A"],
+    ["Mileage", data.mileage || "N/A"],
+    [
+      "Displacement",
+      data.engineCc
+        ? `${data.engineCc}`.includes("cc")
+          ? data.engineCc
+          : `${data.engineCc}`
+        : "N/A",
+    ],
+    ["Year", data.year || "N/A"],
+    ["Grade", data.grade || "N/A"],
+    ["Equipment", data.equipment || "AAC"],
+    ["Transmission", data.transmission || "N/A"],
+    ["Color", data.color || "N/A"],
+    ["Score", data.condition || "N/A"],
+    ["Status", (data.status || "SOLD").toUpperCase()],
+    ["Powered By", "CARCLICK BD"],
+  ];
+
+  const startY = 39;
+  const rowH = 6.4;
+  specsRows.forEach((r, idx) => {
+    const y = startY + idx * rowH;
+    // Row background
+    doc.setFillColor(
+      idx % 2 === 0 ? 255 : 248,
+      idx % 2 === 0 ? 255 : 250,
+      idx % 2 === 0 ? 255 : 252,
+    );
+    doc.rect(leftX, y, leftW, rowH, "F");
+    // Row border
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(leftX, y, leftW, rowH, "S");
+
+    // Label
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(r[0], leftX + 2, y + 4.5);
+
+    // Value
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.5);
+    if (r[0] === "Powered By") {
+      doc.setTextColor(192, 0, 0); // Powered by CarClick BD in Red
+    } else {
+      doc.setTextColor(15, 23, 42);
+    }
+    doc.text(String(r[1]), leftX + 22, y + 4.5);
+  });
+
+  // 3. MIDDLE COLUMN: Japanese Auction Sheet (x=66, width=72, height=115)
+  const midX = 66;
+  const midW = 72;
+  const midH = 115;
+  doc.setDrawColor(203, 213, 225);
+  doc.rect(midX, 26, midW, midH, "S");
+
+  if (data.auctionSheetImage) {
+    const sheetImg = await fetchImageBuffer(data.auctionSheetImage);
+    if (sheetImg) {
+      doc.addImage(
+        sheetImg.buffer,
+        sheetImg.format,
+        midX + 0.5,
+        26.5,
+        midW - 1,
+        midH - 1,
+        undefined,
+        "FAST",
+      );
+    }
+  }
+
+  // 4. RIGHT COLUMN: Auction Sheet Explanation (x=140, width=60)
+  const rightX = 140;
+  doc.setFont("times", "bolditalic");
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Auction Sheet Explanation", rightX, 31);
+  doc.setDrawColor(15, 23, 42);
+  doc.setLineWidth(0.4);
+  doc.line(rightX, 32.5, rightX + 60, 32.5);
+
+  const explanations = [
+    { text: "A1 : Small Scratch | A2 : Scratch | A3 : Big Scratch" },
+    { text: "B1 : Small dent with scratch (size like a thumb)" },
+    { text: "B2 : Dent with scratch (size like flat of the hand)" },
+    { text: "B3 : Big Dent with scratch (size like elbow)" },
+    { text: "C1: Corrosion | C2: Heavy Corrosion" },
+    { text: "E1: Few Dimples | E2: Several Dimples" },
+    { text: "E3: Many Dimples | G: Chip In Glass" },
+    { text: "H: Paint faded | X: Need to be replaced" },
+    { text: "P: Paint Marked | R: Repaired Crack on Windshield" },
+    { text: "RX: Repaired Crack on Windshield (needs to be replaced)" },
+    { text: "S1: Rust | S2: Heavy Rust" },
+    { text: "U1: Small Dent | U2: Dent | U3: Big Dent" },
+    { text: "X: Crack on Windshield (needs to be replaced)" },
+    { text: "XX: Replaced" },
+    { text: "X1: Small Crack on Windshield (approximately 1cm)" },
+    { text: "W1: Repair Mark/Wave (hardly detectable )" },
+    { text: "W2: Repair Mark/Wave" },
+    { text: "W3: Obvious Repair Mark/Wave (needs to be repainted)" },
+    {
+      text: "Y1: Small Hole or Crack | Y2: Hole or Crack | Y3: Big Hole or Crack",
+    },
+  ];
+
+  let expY = 37;
+  explanations.forEach((item) => {
+    if (item.text.includes("|")) {
+      const parts = item.text.split("|");
+      let curX = rightX;
+      parts.forEach((p, pIdx) => {
+        const seg = p.trim();
+        const colonIdx = seg.indexOf(":");
+        if (colonIdx !== -1) {
+          const code = seg.substring(0, colonIdx + 1) + " ";
+          const desc = seg.substring(colonIdx + 1).trim();
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(5.8);
+          doc.setTextColor(192, 0, 0); // Red symbol code
+          doc.text(code, curX, expY);
+          curX += doc.getTextWidth(code);
+
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(30, 41, 59);
+          doc.text(desc, curX, expY);
+          curX += doc.getTextWidth(desc);
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(5.8);
+          doc.setTextColor(30, 41, 59);
+          doc.text(seg, curX, expY);
+          curX += doc.getTextWidth(seg);
+        }
+        if (pIdx < parts.length - 1) {
+          doc.setTextColor(100, 116, 139);
+          doc.text(" | ", curX, expY);
+          curX += doc.getTextWidth(" | ");
+        }
+      });
+    } else {
+      const colonIdx = item.text.indexOf(":");
+      if (colonIdx !== -1) {
+        const code = item.text.substring(0, colonIdx + 1) + " ";
+        const desc = item.text.substring(colonIdx + 1).trim();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(5.8);
+        doc.setTextColor(192, 0, 0); // Red symbol code
+        doc.text(code, rightX, expY);
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(30, 41, 59);
+        doc.text(desc, rightX + doc.getTextWidth(code), expY);
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(5.8);
+        doc.setTextColor(30, 41, 59);
+        doc.text(item.text, rightX, expY);
+      }
+    }
+    expY += 5.4;
+  });
+
+  // 5. BOTTOM SECTION: Car Photos & QR Code (Y = 145mm)
+  const bottomY = 145;
+  const photoW = 60;
+  const photoH = 46;
+
+  // Car Photo 1 (Front View)
+  if (data.carImages && data.carImages[0]) {
+    const photo1 = await fetchImageBuffer(data.carImages[0]);
+    if (photo1) {
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(10, bottomY, photoW, photoH, "S");
+      doc.addImage(
+        photo1.buffer,
+        photo1.format,
+        10.5,
+        bottomY + 0.5,
+        photoW - 1,
+        photoH - 1,
+        undefined,
+        "FAST",
+      );
+    }
+  }
+
+  // Car Photo 2 (Rear View)
+  if (data.carImages && data.carImages[1]) {
+    const photo2 = await fetchImageBuffer(data.carImages[1]);
+    if (photo2) {
+      doc.setDrawColor(203, 213, 225);
+      doc.rect(73, bottomY, photoW, photoH, "S");
+      doc.addImage(
+        photo2.buffer,
+        photo2.format,
+        73.5,
+        bottomY + 0.5,
+        photoW - 1,
+        photoH - 1,
+        undefined,
+        "FAST",
+      );
+    }
+  }
+
+  // QR Code on right side of bottom section
+  if (qrDataUrl) {
+    doc.setDrawColor(203, 213, 225);
+    doc.rect(136, bottomY, 46, 46, "S");
+    doc.addImage(qrDataUrl, "PNG", 136.5, bottomY + 0.5, 45, 45, undefined, "FAST");
+  }
+
+  // 6. FOOTER (Y = 282mm)
+  const footerY = 282;
+  doc.setDrawColor(192, 0, 0); // Red line
+  doc.setLineWidth(0.5);
+  doc.line(10, footerY, pageWidth - 10, footerY);
+
   doc.setFont("helvetica", "bold");
-  doc.text(
-    "Verified by CarClickBD (www.carclickbd.com) • Support: info@carclickbd.com",
-    16,
-    183,
-  );
+  doc.setFontSize(8.5);
+  doc.setTextColor(192, 0, 0);
+  doc.text("A product by https://carclickbd.com/", 10, footerY + 5);
+
+  doc.setFont("times", "italic");
+  doc.setFontSize(8.5);
+  doc.setTextColor(51, 65, 85);
+  doc.text("Page 1 of 1", pageWidth - 10, footerY + 5, { align: "right" });
 
   return new Uint8Array(doc.output("arraybuffer"));
 }
