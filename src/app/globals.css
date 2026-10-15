@@ -216,3 +216,59 @@ svg {
 .glass-drawer .ant-drawer-body {
   background: transparent !important;
 }
+
+/* Hero Slider Swiper Premium White Theme Controls */
+.hero-slider-swiper .swiper-button-next,
+.hero-slider-swiper .swiper-button-prev {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+.hero-slider-swiper .swiper-button-next:hover,
+.hero-slider-swiper .swiper-button-prev:hover {
+  background: #e50914 !important;
+  color: #ffffff !important;
+  border-color: #e50914 !important;
+  box-shadow: 0 6px 22px rgba(229, 9, 20, 0.35) !important;
+  transform: scale(1.08) !important;
+}
+
+.hero-slider-swiper .swiper-button-next::after,
+.hero-slider-swiper .swiper-button-prev::after {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+.hero-slider-swiper .swiper-pagination-bullets {
+  bottom: 14px !important;
+}
+
+.hero-slider-swiper .swiper-pagination-bullet {
+  background: #cbd5e1 !important;
+  opacity: 1 !important;
+  width: 8px !important;
+  height: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hero-slider-swiper .swiper-pagination-bullet-active {
+  background: #e50914 !important;
+  width: 26px !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 10px rgba(229, 9, 20, 0.45) !important;
+}
+
+@media (max-width: 768px) {
+  .hero-slider-swiper .swiper-button-next,
+  .hero-slider-swiper .swiper-button-prev {
+    display: none !important;
+  }
+}
