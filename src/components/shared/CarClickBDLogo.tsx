@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-1.png";
 
 type CarClickBDLogoProps = {
   className?: string;

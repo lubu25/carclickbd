@@ -19,23 +19,32 @@ const SignInPage: React.FC<{
     try {
       const response = await signin(values).unwrap();
 
-      if (response?.statusCode === 200) {
+      if ((response?.statusCode === 200 || response?.success) && response?.data) {
         const { accessToken, user } = response.data;
 
-        if (user.isDisabled) {
+        if (user?.isDisabled) {
           message.error("Your account is disabled.");
           return;
         }
 
-        dispatch(setIsLoggedIn(accessToken));
-        dispatch(setProfileInfo(user));
-        message.success(response?.message);
-        handleRedirect(user.role, router);
+        if (accessToken && user) {
+          dispatch(setIsLoggedIn(accessToken));
+          dispatch(setProfileInfo(user));
+          message.success(response?.message || "Signed in successfully!");
+          handleRedirect(user?.role, router);
+        } else {
+          message.error("Invalid response from server. Please try again.");
+        }
       } else {
-        message.error("An unexpected error occurred.");
+        message.error(response?.message || "An unexpected error occurred.");
       }
     } catch (error: any) {
-      const errorMsg = error?.message || "Sign-in failed. Please try again.";
+      const errorMsg =
+        (typeof error?.data?.message === "string" && error.data.message) ||
+        (typeof error?.message === "string" && error.message) ||
+        (Array.isArray(error?.errorMessages) && error.errorMessages[0]?.message) ||
+        (Array.isArray(error?.data?.errorMessages) && error.data.errorMessages[0]?.message) ||
+        "Sign-in failed. Please check your credentials.";
       message.error(errorMsg);
     }
   };

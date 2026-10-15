@@ -9,11 +9,18 @@ export const setToLocalStorageAsStringify = (key: string, data: any) => {
 
 export const getFromLocalStorageAsParse = (key: string) => {
   if (!key || typeof window === "undefined") {
-    return "";
+    return null;
   }
-  const stringifyData = localStorage.getItem(key);
-  const parseData = JSON.parse(stringifyData as string);
-  return parseData || null;
+  try {
+    const stringifyData = localStorage.getItem(key);
+    if (!stringifyData || stringifyData === "undefined" || stringifyData === "null") {
+      return null;
+    }
+    const parseData = JSON.parse(stringifyData);
+    return parseData || null;
+  } catch (err) {
+    return null;
+  }
 };
 
 export const setToLocalStorage = (key: string, data: any) => {

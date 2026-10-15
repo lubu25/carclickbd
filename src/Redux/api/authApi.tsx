@@ -30,6 +30,13 @@ const authApi = baseApi.injectEndpoints({
         data: signinData,
       }),
     }),
+    googleLogin: build.mutation({
+      query: (data: { credential: string }) => ({
+        url: "/auth/google-login",
+        method: "POST",
+        data,
+      }),
+    }),
     impersonateUser: build.mutation({
       query: (userId: string) => ({
         url: `/auth/impersonate/${userId}`,
@@ -93,6 +100,7 @@ const authApi = baseApi.injectEndpoints({
 
 export const {
   useSigninMutation,
+  useGoogleLoginMutation,
   useImpersonateUserMutation,
   useSignupMutation,
   useIsUserExistMutation,

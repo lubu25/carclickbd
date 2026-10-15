@@ -62,7 +62,7 @@ const ProfileDropdown: React.FC = () => {
           <Avatar
             src={user?.profilePhoto ? getMediaUrl(user.profilePhoto) : undefined}
             icon={!user?.profilePhoto ? <AiOutlineUser /> : undefined}
-            className="border-2 border-blue-500 w-10 h-10 min-w-[27px] min-h-[27px] max-w-[35px] max-h-[35px]"
+            className="border-2 border-[#e50914] shadow-sm w-9 h-9 min-w-[28px] min-h-[28px] max-w-[36px] max-h-[36px]"
           />
         </div>
       </Tooltip>

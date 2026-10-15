@@ -2,18 +2,33 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Dropdown, Drawer, MenuProps } from "antd";
 import { DownOutlined, GlobalOutlined, MenuOutlined } from "@ant-design/icons";
+import {
+  Home,
+  Calculator,
+  Car,
+  CalendarCheck,
+  HelpCircle,
+  ShieldCheck,
+  Tag,
+  Heart,
+  Sparkles,
+  CheckCircle2,
+  BookOpen,
+  ExternalLink,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import { useAppSelector } from "@/Redux/hooks";
 import CarClickBDLogo from "@/components/shared/CarClickBDLogo";
-import { Heart } from "lucide-react";
 import { useGetUserWatchListQuery } from "@/Redux/features/watch-list/watchlistApi";
 import {
   getLocalWishlist,
   getWishlistUserKey,
   LOCAL_WISHLIST_UPDATED_EVENT,
 } from "@/utils/localWishlist";
-
 import dynamic from "next/dynamic";
 
 const ProfileDropdown = dynamic(() => import("./ProfileDropdown"), { ssr: false });
@@ -53,21 +68,21 @@ const WishlistNavIcon = ({ compact = false }: { compact?: boolean }) => {
   return (
     <Link
       href="/wishlist"
-      className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition ${
+      className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 hover:scale-105 ${
         hasItems
-          ? "border-rose-400/70 bg-rose-500/15 text-rose-500 shadow-[0_0_16px_rgba(244,63,94,0.28)]"
-          : "border-white/10 bg-white/10 text-white hover:border-rose-300/70 hover:bg-white/15 hover:text-rose-400"
+          ? "border-rose-300 bg-rose-50 text-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.25)]"
+          : "border-slate-200/90 bg-slate-100/90 text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500"
       }`}
       aria-label="Wishlist"
       title="Wishlist"
     >
       <Heart
-        size={compact ? 17 : 18}
-        strokeWidth={2.5}
+        size={compact ? 16 : 17}
+        strokeWidth={2.3}
         fill={hasItems ? "currentColor" : "none"}
       />
       {hasItems && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black leading-none text-white ring-2 ring-black">
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-black leading-none text-white ring-2 ring-white">
           {count > 99 ? "99+" : count}
         </span>
       )}
@@ -77,294 +92,629 @@ const WishlistNavIcon = ({ compact = false }: { compact?: boolean }) => {
 
 const Header: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const isLoggedIn = useAppSelector((state) => state.authReducer.isLoggedIn);
   if (isLoggedIn === undefined) return null;
 
-  const btnBlue =
-    "rounded-full border border-white/10 bg-gradient-to-r from-[#b80f17] to-[#f11b24] px-4 py-2 text-xs font-bold text-white shadow-sm shadow-red-950/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-[#9f0d14] hover:to-[#d91620] hover:shadow-md hover:shadow-red-500/30";
-  const btnGold =
-    "rounded-none border border-[#ffe08a]/70 bg-gradient-to-r from-[#f0b90b] via-[#ffd45a] to-[#f0b90b] px-5 py-2.5 text-sm font-extrabold text-slate-950 shadow-sm shadow-[#f0b90b]/25 transition-all duration-300 hover:-translate-y-0.5 hover:from-[#ffd45a] hover:via-[#f0b90b] hover:to-[#d9a609] hover:shadow-md hover:shadow-[#f0b90b]/35";
-  const btnOutline =
-    "relative isolate overflow-hidden rounded-none border border-[#ffe08a]/80 bg-gradient-to-r from-[#f0b90b] via-[#ffd45a] to-[#f0b90b] px-5 py-2.5 text-sm font-black text-slate-950 shadow-sm shadow-[#f0b90b]/30 transition-all duration-300 animate-[redGlowPulse_1.7s_ease-in-out_infinite] before:absolute before:inset-y-0 before:-left-10 before:z-0 before:w-8 before:skew-x-[-18deg] before:bg-white/80 before:blur-sm before:content-[''] before:animate-[verify-shine_2.8s_ease-in-out_infinite] after:pointer-events-none after:absolute after:inset-[-1px] after:z-0 after:rounded-none after:border after:border-[#fff3bf]/80 after:shadow-[0_0_18px_rgba(240,185,11,0.82),inset_0_0_12px_rgba(255,255,255,0.28)] after:content-[''] hover:-translate-y-0.5 hover:from-[#ffd45a] hover:via-[#f0b90b] hover:to-[#d9a609]";
+  const isHomeActive = pathname === "/";
+  const isDutyActive = Boolean(pathname?.startsWith("/duty-calculator"));
+  const isCarsActive = Boolean(
+    pathname?.startsWith("/cars") ||
+      pathname?.startsWith("/car-details") ||
+      pathname?.startsWith("/auction-details")
+  );
+  const isHelpActive = Boolean(
+    pathname?.startsWith("/help") ||
+      pathname?.startsWith("/how-it-works") ||
+      pathname?.startsWith("/faq")
+  );
+  const isVerifyActive = Boolean(pathname?.startsWith("/verify-auction-sheet"));
 
   const languageMenu: MenuProps["items"] = [
     {
       key: "en",
       label: (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 py-1">
           <img
             src="https://flagcdn.com/gb.svg"
             alt="English"
-            className="h-3 w-5 rounded-sm border border-gray-200"
+            className="h-3.5 w-5 rounded-xs border border-gray-200 object-cover shadow-2xs"
           />
-          <span>English</span>
+          <span className="text-xs font-semibold text-slate-800">English</span>
         </div>
       ),
     },
     {
       key: "bn",
       label: (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 py-1">
           <img
             src="https://flagcdn.com/bd.svg"
             alt="Bangla"
-            className="h-3 w-5 rounded-sm border border-gray-200"
+            className="h-3.5 w-5 rounded-xs border border-gray-200 object-cover shadow-2xs"
           />
-          <span>বাংলা</span>
+          <span className="text-xs font-semibold text-slate-800">বাংলা</span>
         </div>
       ),
-    },
-  ];
-
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Duty Calculator", href: "/duty-calculator" },
-    { label: "Find Cars", href: "/cars" },
-    {
-      label: "Production Year Check",
-      href: "https://www.jp.center/month",
-      external: true,
     },
   ];
 
   const helpMenu: MenuProps["items"] = [
     {
       key: "how-it-works",
-      label: <Link href="/help?tab=how-it-works">How it Works</Link>,
+      label: (
+        <Link href="/help?tab=how-it-works" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <BookOpen size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">How It Works</div>
+            <div className="text-[10px] text-slate-500">Step by step buying guide</div>
+          </div>
+        </Link>
+      ),
     },
     {
       key: "buying-car",
-      label: <Link href="/help?tab=buying-car">Buying a Car</Link>,
+      label: (
+        <Link href="/help?tab=buying-car" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <Car size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Buying a Car</div>
+            <div className="text-[10px] text-slate-500">Auction sheet & duty guides</div>
+          </div>
+        </Link>
+      ),
     },
     {
       key: "selling-car",
-      label: <Link href="/help?tab=selling-car">Selling Car</Link>,
+      label: (
+        <Link href="/help?tab=selling-car" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Tag size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Selling Car</div>
+            <div className="text-[10px] text-slate-500">Guidelines for private & dealers</div>
+          </div>
+        </Link>
+      ),
     },
-    { key: "faq", label: <Link href="/help?tab=faq">FAQ</Link> },
+    {
+      key: "faq",
+      label: (
+        <Link href="/help?tab=faq" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+            <HelpCircle size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">FAQ</div>
+            <div className="text-[10px] text-slate-500">Frequently answered questions</div>
+          </div>
+        </Link>
+      ),
+    },
   ];
 
   const sellMenu: MenuProps["items"] = [
-    { key: "dealer", label: <Link href="/dealer-rules">Dealer</Link> },
+    {
+      key: "dealer",
+      label: (
+        <Link href="/dealer-rules" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600">
+            <Car size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Dealer Portal</div>
+            <div className="text-[10px] text-slate-500">Showroom inventory & bulk upload</div>
+          </div>
+        </Link>
+      ),
+    },
     {
       key: "individual",
-      label: <Link href="/individual-seller-rules">Individual</Link>,
+      label: (
+        <Link href="/individual-seller-rules" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Tag size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Individual Seller</div>
+            <div className="text-[10px] text-slate-500">Sell your personal car directly</div>
+          </div>
+        </Link>
+      ),
     },
   ];
 
   const buyMenu: MenuProps["items"] = [
-    { key: "new", label: <Link href="/cars?condition=new">New</Link> },
+    {
+      key: "new",
+      label: (
+        <Link href="/cars?condition=new" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+            <Sparkles size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Brand New Cars</div>
+            <div className="text-[10px] text-slate-500">0 km showroom fresh condition</div>
+          </div>
+        </Link>
+      ),
+    },
     {
       key: "reconditioned",
-      label: <Link href="/cars?condition=reconditioned">Reconditioned</Link>,
+      label: (
+        <Link href="/cars?condition=reconditioned" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Car size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Reconditioned</div>
+            <div className="text-[10px] text-slate-500">Japan auction imported verified</div>
+          </div>
+        </Link>
+      ),
     },
     {
       key: "local-used",
-      label: <Link href="/cars?condition=local-used">Local Used</Link>,
+      label: (
+        <Link href="/cars?condition=local-used" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <CheckCircle2 size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Local Used</div>
+            <div className="text-[10px] text-slate-500">Registered in Bangladesh</div>
+          </div>
+        </Link>
+      ),
     },
     {
       key: "upcoming",
-      label: <Link href="/cars?status=upcoming">Upcoming</Link>,
+      label: (
+        <Link href="/cars?status=upcoming" className="flex items-center gap-3 py-1">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <CalendarCheck size={14} />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800">Upcoming Auctions</div>
+            <div className="text-[10px] text-slate-500">Pre-order live upcoming vehicles</div>
+          </div>
+        </Link>
+      ),
     },
   ];
 
-  const navLinkClass =
-    "relative text-sm font-semibold text-gray-200 transition-all duration-300 hover:text-[#ff2a35] after:absolute after:left-0 after:bottom-[-5px] after:h-[2px] after:w-0 after:bg-[#e50914] after:transition-all after:duration-300 hover:after:w-full";
+  const pillBaseClass =
+    "group relative inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs lg:text-[13px] font-semibold rounded-full transition-all duration-200 active:scale-95";
+  const pillActiveClass =
+    "bg-gradient-to-r from-[#d91620] to-[#b80f17] text-white font-bold shadow-[0_2px_10px_rgba(217,22,32,0.35)] ring-1 ring-red-500/20";
+  const pillInactiveClass =
+    "text-slate-600 hover:text-slate-950 hover:bg-white hover:shadow-xs";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-black shadow-lg backdrop-blur-sm">
-      <div className="flex min-h-[72px] items-center justify-between gap-2 px-2 py-2 min-[360px]:gap-3 min-[360px]:px-3 sm:px-4 md:min-h-[84px] md:gap-5 md:px-8 md:py-3">
-        <Link href="/" className="flex shrink-0 items-center">
-          <CarClickBDLogo className="h-12 w-36 min-[360px]:h-[58px] min-[360px]:w-[185px] sm:h-[68px] sm:w-[220px] md:h-[82px] md:w-[260px]" priority />
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-[0_4px_25px_-5px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.03)]">
+      {/* Subtle top luxury accent line */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#e50914] to-[#f0b90b]" />
+
+      <div className="mx-auto flex max-w-[1720px] items-center justify-between gap-3 px-3 py-2.5 sm:px-6 md:py-3 lg:gap-4 lg:px-8">
+        {/* Brand Logo */}
+        <Link href="/" className="flex shrink-0 items-center transition-transform duration-200 hover:scale-[1.02]">
+          <CarClickBDLogo
+            className="h-10 w-32 min-[360px]:h-11 min-[360px]:w-36 sm:h-12 sm:w-44 md:h-[52px] md:w-48"
+            priority
+          />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-4 2xl:flex">
-          {navItems.map((item) =>
-            item.external ? (
-              <a
-                key={item.href}
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className={navLinkClass}
+        {/* Center Pill Button Navigation Tabs */}
+        <nav className="hidden xl:flex items-center">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200/90 bg-slate-100/90 p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+            {/* Home Pill */}
+            <Link
+              href="/"
+              className={`${pillBaseClass} ${isHomeActive ? pillActiveClass : pillInactiveClass}`}
+            >
+              <Home
+                size={14}
+                className={isHomeActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+              />
+              <span>Home</span>
+              {isHomeActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+              )}
+            </Link>
+
+            {/* Duty Calculator Pill */}
+            <Link
+              href="/duty-calculator"
+              className={`${pillBaseClass} ${isDutyActive ? pillActiveClass : pillInactiveClass}`}
+            >
+              <Calculator
+                size={14}
+                className={isDutyActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+              />
+              <span>Duty Calculator</span>
+              {isDutyActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+              )}
+            </Link>
+
+            {/* Find Cars Pill */}
+            <Link
+              href="/cars"
+              className={`${pillBaseClass} ${isCarsActive ? pillActiveClass : pillInactiveClass}`}
+            >
+              <Car
+                size={14}
+                className={isCarsActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+              />
+              <span>Find Cars</span>
+              {isCarsActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+              )}
+            </Link>
+
+            {/* Production Year Check Pill */}
+            <a
+              href="https://www.jp.center/month"
+              target="_blank"
+              rel="noreferrer"
+              className={`${pillBaseClass} ${pillInactiveClass}`}
+            >
+              <CalendarCheck
+                size={14}
+                className="text-slate-500 group-hover:text-slate-900 transition-colors"
+              />
+              <span>Production Year Check</span>
+              <ExternalLink size={11} className="text-slate-400 group-hover:text-slate-700" />
+            </a>
+
+            {/* Help Dropdown Pill */}
+            <Dropdown menu={{ items: helpMenu }} trigger={["hover"]} placement="bottom">
+              <button
+                type="button"
+                className={`${pillBaseClass} ${isHelpActive ? pillActiveClass : pillInactiveClass}`}
               >
-                {item.label}
-              </a>
-            ) : (
-              <Link key={item.href} href={item.href} className={navLinkClass}>
-                {item.label}
-              </Link>
-            )
-          )}
-          <Dropdown menu={{ items: helpMenu }} trigger={["hover"]}>
-            <button className={`${navLinkClass} flex items-center gap-1`}>
-              Help <DownOutlined className="text-[10px]" />
-            </button>
-          </Dropdown>
+                <HelpCircle
+                  size={14}
+                  className={isHelpActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+                />
+                <span>Help</span>
+                <DownOutlined
+                  className={`text-[9px] ${
+                    isHelpActive ? "text-white" : "text-slate-400 group-hover:text-slate-800"
+                  }`}
+                />
+                {isHelpActive && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+                )}
+              </button>
+            </Dropdown>
+          </div>
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-3 lg:flex">
-          <Link href="/verify-auction-sheet" className="hidden lg:block">
-            <button className={btnOutline}>
-              <span className="relative z-10 animate-[verify-text-flicker_1.55s_ease-in-out_infinite]">
-                Verify Auction Sheet
-              </span>
+        {/* Right Action Controls */}
+        <div className="hidden lg:flex shrink-0 items-center gap-2.5">
+          {/* Verify Auction Sheet Pill Button */}
+          <Link href="/verify-auction-sheet" className="shrink-0">
+            <button
+              type="button"
+              className={`group relative overflow-hidden rounded-full border border-amber-300/80 bg-gradient-to-r from-[#f0b90b] via-[#ffd359] to-[#f0b90b] px-4 py-2 text-xs xl:text-sm font-extrabold text-slate-950 shadow-[0_3px_14px_rgba(240,185,11,0.32)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_22px_rgba(240,185,11,0.48)] active:translate-y-0 flex items-center gap-1.5 ${
+                isVerifyActive
+                  ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
+                  : ""
+              }`}
+            >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
+              <ShieldCheck size={16} className="text-slate-950 stroke-[2.5]" />
+              <span>Verify Auction Sheet</span>
             </button>
           </Link>
 
-          <Dropdown menu={{ items: buyMenu }} trigger={["hover"]}>
-            <button className={`${btnGold} flex items-center gap-1`}>
-              Buy your car <DownOutlined className="text-xs" />
-            </button>
-          </Dropdown>
-
-          <Dropdown menu={{ items: sellMenu }} trigger={["hover"]}>
-            <button className={`${btnGold} flex items-center gap-1`}>
-              Sell your car <DownOutlined className="text-xs" />
-            </button>
-          </Dropdown>
-
-          <Dropdown menu={{ items: languageMenu }} placement="bottomRight">
+          {/* Buy your car Pill Button */}
+          <Dropdown menu={{ items: buyMenu }} trigger={["hover"]} placement="bottom">
             <button
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-lg text-white transition hover:border-[#e50914]/60 hover:bg-white/15 hover:text-[#ff2a35]"
-              aria-label="Change language"
+              type="button"
+              className="group flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-100/90 px-3.5 py-2 text-xs xl:text-sm font-bold text-slate-800 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-200/80 hover:text-slate-950 active:scale-95"
             >
-              <GlobalOutlined />
+              <Car size={14} className="text-slate-600 group-hover:text-slate-900 transition-colors" />
+              <span>Buy your car</span>
+              <DownOutlined className="text-[10px] text-slate-400 group-hover:text-slate-700 transition-transform duration-200 group-hover:translate-y-0.5" />
             </button>
           </Dropdown>
 
+          {/* Sell your car Pill Button */}
+          <Dropdown menu={{ items: sellMenu }} trigger={["hover"]} placement="bottom">
+            <button
+              type="button"
+              className="group flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-xs xl:text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md active:translate-y-0"
+            >
+              <Tag size={13} className="text-amber-400" />
+              <span>Sell your car</span>
+              <DownOutlined className="text-[10px] text-slate-400 group-hover:text-white transition-transform duration-200 group-hover:translate-y-0.5" />
+            </button>
+          </Dropdown>
+
+          {/* Language Switcher */}
+          <Dropdown menu={{ items: languageMenu }} placement="bottomRight" trigger={["hover"]}>
+            <button
+              type="button"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-950 hover:scale-105 shadow-xs"
+              aria-label="Change language"
+              title="Change language"
+            >
+              <GlobalOutlined className="text-[15px]" />
+            </button>
+          </Dropdown>
+
+          {/* Wishlist Icon */}
           <WishlistNavIcon />
 
-          {isLoggedIn ? (
-            <ProfileDropdown />
-          ) : (
-            <NavAuth />
-          )}
+          {/* User Authentication / Profile */}
+          {isLoggedIn ? <ProfileDropdown /> : <NavAuth />}
         </div>
 
-        <button
-          onClick={() => setOpen(true)}
-          className="hidden text-xl text-white 2xl:hidden lg:block"
-          aria-label="Open navigation menu"
-        >
-          <MenuOutlined />
-        </button>
-
-        <div className="flex items-center gap-1.5 lg:hidden min-[360px]:gap-2">
-          <Dropdown menu={{ items: languageMenu }}>
+        {/* Mobile / Tablet Menu Button (Visible below XL) */}
+        <div className="flex items-center gap-1.5 xl:hidden">
+          {/* Quick Verify button on tablet */}
+          <Link href="/verify-auction-sheet" className="hidden sm:block md:hidden">
             <button
-              className="hidden h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white hover:text-[#ff2a35] min-[360px]:flex"
-              aria-label="Change language"
+              type="button"
+              className="rounded-full border border-amber-300/80 bg-gradient-to-r from-[#f0b90b] to-[#ffd359] px-3 py-1.5 text-xs font-black text-slate-950 shadow-xs"
             >
-              <GlobalOutlined />
+              Verify Sheet
             </button>
-          </Dropdown>
-          <span className="hidden min-[360px]:inline-flex">
+          </Link>
+
+          <span className="hidden min-[380px]:inline-flex">
             <WishlistNavIcon compact />
           </span>
+
           {isLoggedIn ? <ProfileDropdown /> : <NavAuth />}
-          <button onClick={() => setOpen(true)} className="text-xl text-white" aria-label="Open navigation menu">
-            <MenuOutlined />
+
+          <button
+            onClick={() => setOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100 text-slate-800 transition-colors hover:bg-slate-200"
+            aria-label="Open navigation menu"
+          >
+            <MenuOutlined className="text-base" />
           </button>
         </div>
       </div>
 
+      {/* Modern Luxury Mobile Drawer */}
       <Drawer
         placement="right"
         onClose={() => setOpen(false)}
         open={open}
-        width="85%"
-        maskStyle={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        width="88%"
+        maskStyle={{ backgroundColor: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(4px)" }}
         styles={{
           content: {
-            background: "rgba(10, 20, 45, 0.95)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            color: "white",
+            background: "#ffffff",
+            color: "#0f172a",
+          },
+          body: {
+            padding: 0,
           },
         }}
         closable={false}
       >
-        <div className="flex justify-end p-3">
-          <button
-            onClick={() => setOpen(false)}
-            className="text-2xl text-gray-400 hover:text-white"
-          >
-            x
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="mb-6">
-            {isLoggedIn ? (
-              <ProfileDropdown />
-            ) : (
-              <Link href="/login">
-                <button className={`${btnBlue} w-full py-3 font-semibold`}>
-                  Sign in
-                </button>
-              </Link>
-            )}
+        <div className="flex h-full flex-col">
+          {/* Drawer Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <CarClickBDLogo className="h-9 w-32" />
+            <button
+              onClick={() => setOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          <Link href="/verify-auction-sheet" className="mb-5 block">
-            <button className={`${btnOutline} w-full py-3`}>
-              Verify Auction Sheet
-            </button>
-          </Link>
+          {/* Drawer Body */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {/* Primary Action Button */}
+            <Link
+              href="/verify-auction-sheet"
+              onClick={() => setOpen(false)}
+              className="mb-4 block"
+            >
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-gradient-to-r from-[#f0b90b] via-[#ffd359] to-[#f0b90b] py-3 text-sm font-extrabold text-slate-950 shadow-md shadow-amber-400/20"
+              >
+                <ShieldCheck size={18} className="stroke-[2.5]" />
+                <span>Verify Auction Sheet</span>
+              </button>
+            </Link>
 
-          <div className="flex flex-col gap-3 text-base text-gray-200">
-            {navItems.map((item) =>
-              item.external ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {item.label}
-                </a>
-              ) : (
-                <Link key={item.href} href={item.href}>
-                  {item.label}
-                </Link>
-              )
-            )}
-            <div className="mt-2 border-t border-white/10 pt-3">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ff2a35]">
-                Help
+            {/* Navigation Pill List */}
+            <div className="space-y-1.5">
+              <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Navigation
               </p>
-              <div className="flex flex-col gap-3">
-                <Link href="/help?tab=how-it-works">How it Works</Link>
-                <Link href="/help?tab=buying-car">Buying a Car</Link>
-                <Link href="/help?tab=selling-car">Selling Car</Link>
-                <Link href="/help?tab=faq">FAQ</Link>
+
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-bold transition ${
+                  isHomeActive
+                    ? "bg-gradient-to-r from-[#d91620] to-[#b80f17] text-white shadow-sm"
+                    : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Home size={16} />
+                  <span>Home</span>
+                </div>
+                <ChevronRight size={14} className="opacity-60" />
+              </Link>
+
+              <Link
+                href="/duty-calculator"
+                onClick={() => setOpen(false)}
+                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-bold transition ${
+                  isDutyActive
+                    ? "bg-gradient-to-r from-[#d91620] to-[#b80f17] text-white shadow-sm"
+                    : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Calculator size={16} />
+                  <span>Duty Calculator</span>
+                </div>
+                <ChevronRight size={14} className="opacity-60" />
+              </Link>
+
+              <Link
+                href="/cars"
+                onClick={() => setOpen(false)}
+                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-bold transition ${
+                  isCarsActive
+                    ? "bg-gradient-to-r from-[#d91620] to-[#b80f17] text-white shadow-sm"
+                    : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Car size={16} />
+                  <span>Find Cars</span>
+                </div>
+                <ChevronRight size={14} className="opacity-60" />
+              </Link>
+
+              <a
+                href="https://www.jp.center/month"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <CalendarCheck size={16} />
+                  <span>Production Year Check</span>
+                </div>
+                <ExternalLink size={14} className="opacity-60" />
+              </a>
+
+              <Link
+                href="/wishlist"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Heart size={16} className="text-rose-500" />
+                  <span>My Wishlist</span>
+                </div>
+                <ChevronRight size={14} className="opacity-60" />
+              </Link>
+            </div>
+
+            {/* Buy & Sell Quick Links */}
+            <div className="mt-5 space-y-1.5">
+              <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Explore Cars
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/cars?condition=new"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Brand New
+                </Link>
+                <Link
+                  href="/cars?condition=reconditioned"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Reconditioned
+                </Link>
+                <Link
+                  href="/cars?condition=local-used"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Local Used
+                </Link>
+                <Link
+                  href="/cars?status=upcoming"
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Upcoming
+                </Link>
               </div>
             </div>
-            <Link
-              href="/wishlist"
-              className="mt-2 inline-flex items-center gap-2 border-t border-white/10 pt-3 font-semibold text-white"
-            >
-              <Heart size={18} />
-              Wishlist
-            </Link>
-          </div>
-        </div>
 
-        <div className="sticky bottom-0 left-0 right-0 grid grid-cols-2 gap-2 border-t border-white/10 bg-[#0b0b0b]/95 p-3">
-          <Dropdown menu={{ items: buyMenu }} trigger={["click"]}>
-            <button
-              className={`${btnGold} flex items-center justify-center gap-1 px-3 py-2.5`}
-            >
-              Buy your car <DownOutlined />
-            </button>
-          </Dropdown>
-          <Dropdown menu={{ items: sellMenu }} trigger={["click"]}>
-            <button
-              className={`${btnGold} flex items-center justify-center gap-1 px-3 py-2.5`}
-            >
-              Sell your car <DownOutlined />
-            </button>
-          </Dropdown>
+            {/* Help Links */}
+            <div className="mt-5 space-y-1">
+              <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Help & Guides
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 text-xs font-semibold text-slate-600">
+                <Link
+                  href="/help?tab=how-it-works"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg p-2 hover:bg-slate-100"
+                >
+                  How it Works
+                </Link>
+                <Link
+                  href="/help?tab=buying-car"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg p-2 hover:bg-slate-100"
+                >
+                  Buying Guide
+                </Link>
+                <Link
+                  href="/help?tab=selling-car"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg p-2 hover:bg-slate-100"
+                >
+                  Selling Guide
+                </Link>
+                <Link
+                  href="/help?tab=faq"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg p-2 hover:bg-slate-100"
+                >
+                  FAQ
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Drawer Footer Actions */}
+          <div className="border-t border-slate-100 bg-slate-50/80 p-4">
+            <div className="grid grid-cols-2 gap-2">
+              <Dropdown menu={{ items: buyMenu }} trigger={["click"]}>
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white py-2.5 text-xs font-bold text-slate-800 shadow-2xs"
+                >
+                  <Car size={14} />
+                  <span>Buy Car</span>
+                  <DownOutlined className="text-[9px]" />
+                </button>
+              </Dropdown>
+
+              <Dropdown menu={{ items: sellMenu }} trigger={["click"]}>
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white shadow-2xs"
+                >
+                  <Tag size={13} className="text-amber-400" />
+                  <span>Sell Car</span>
+                  <DownOutlined className="text-[9px]" />
+                </button>
+              </Dropdown>
+            </div>
+          </div>
         </div>
       </Drawer>
     </header>

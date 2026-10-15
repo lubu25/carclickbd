@@ -12,6 +12,7 @@ import Image from "next/image";
 import ResetPasswordWithOTP from "@/components/auth/resetPassword";
 import { getTokenInfo } from "@/service/auth.service";
 import Button from "@/components/shared/PrimaryButton";
+import { User } from "lucide-react";
 
 const AUTH_STATES = {
   SIGN_IN: 0,
@@ -19,7 +20,12 @@ const AUTH_STATES = {
   FORGOT_PASSWORD: 3,
 };
 
-const AuthModal = () => {
+interface NavAuthProps {
+  className?: string;
+  fullWidth?: boolean;
+}
+
+const AuthModal: React.FC<NavAuthProps> = ({ className, fullWidth = false }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [authState, setAuthState] = useState<number>(AUTH_STATES.SIGN_IN);
 
@@ -47,9 +53,19 @@ const AuthModal = () => {
 
   return (
     <>
-      {/* Reusable Button */}
-     
-      <Button size="sm" variant="secondary" onClick={toggleAuthModel}>Sign in</Button>
+      <button
+        type="button"
+        onClick={toggleAuthModel}
+        className={
+          className ||
+          `inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-xs xl:text-sm font-bold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow active:translate-y-0 ${
+            fullWidth ? "w-full" : ""
+          }`
+        }
+      >
+        <User size={15} className="text-slate-300" />
+        <span>Sign in</span>
+      </button>
       <Modal
         key={authState}
         title={
