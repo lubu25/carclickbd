@@ -292,8 +292,8 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
         className="relative overflow-hidden"
         style={{
           background:
-            "linear-gradient(90deg, #240843 0%, #4c1d95 50%, #2e0854 100%)",
-          borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+            "linear-gradient(90deg, #0b1727 0%, #102a45 50%, #0b1727 100%)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
         }}
       >
         {/* Subtle top light effect */}
@@ -301,13 +301,13 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
           className="pointer-events-none absolute top-0 left-0 right-0 h-[1px]"
           style={{
             background:
-              "linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.4) 50%, transparent)",
+              "linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4) 50%, transparent)",
           }}
         />
 
         <div className="mx-auto max-w-7xl px-4 py-4 md:px-8">
           <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
-            <p className="text-xs text-purple-200/90">
+            <p className="text-xs text-slate-300">
               Copyright © 2026{" "}
               <span className="font-semibold text-white">
                 CarClickBD
@@ -328,20 +328,20 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                     aria-label={social.label}
                     className="group inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
                     style={{
-                      border: "1px solid rgba(255, 255, 255, 0.22)",
-                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      background: "rgba(255, 255, 255, 0.07)",
                       color: "#ffffff",
                     }}
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLAnchorElement;
                       el.style.borderColor = "#ffffff";
                       el.style.background = "#ffffff";
-                      el.style.color = "#4c1d95";
+                      el.style.color = "#0b1727";
                     }}
                     onMouseLeave={(e) => {
                       const el = e.currentTarget as HTMLAnchorElement;
-                      el.style.borderColor = "rgba(255, 255, 255, 0.22)";
-                      el.style.background = "rgba(255, 255, 255, 0.1)";
+                      el.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                      el.style.background = "rgba(255, 255, 255, 0.07)";
                       el.style.color = "#ffffff";
                     }}
                   >
@@ -360,12 +360,12 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                 <React.Fragment key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-xs text-purple-200/80 transition-colors duration-200 hover:text-white"
+                    className="text-xs text-slate-400 transition-colors duration-200 hover:text-white"
                   >
                     {item.label}
                   </Link>
                   {idx < arr.length - 1 && (
-                    <span className="text-purple-400/50">·</span>
+                    <span className="text-slate-600">·</span>
                   )}
                 </React.Fragment>
               ))}
