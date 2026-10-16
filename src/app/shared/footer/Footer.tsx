@@ -85,95 +85,140 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
         }}
       />
 
-      {/* Main body */}
-      <div style={{ background: "linear-gradient(180deg, #f8fafd 0%, #ffffff 100%)" }}>
-        <div className="mx-auto max-w-7xl px-4 py-14 md:px-8">
+      {/* Main body with modern dot grid pattern & ambient effects */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(180deg, #f8fafd 0%, #ffffff 40%, #f8fafd 100%)",
+        }}
+      >
+        {/* Subtle luminous accent line effect */}
+        <div className="pointer-events-none absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+
+        {/* Modern square dot grid pattern effect (matches top CTA banner) */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.085]"
+          style={{
+            maskImage:
+              "radial-gradient(ellipse 95% 85% at 50% 25%, #000 55%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 95% 85% at 50% 25%, #000 55%, transparent 100%)",
+          }}
+        >
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern
+                id="footerDotGrid"
+                x="0"
+                y="0"
+                width="24"
+                height="24"
+                patternUnits="userSpaceOnUse"
+              >
+                <rect x="2" y="2" width="2" height="2" fill="#0f172a" rx="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#footerDotGrid)" />
+          </svg>
+        </div>
+
+        {/* Ambient atmospheric lighting glows */}
+        <div className="pointer-events-none absolute -top-24 right-1/4 h-80 w-80 rounded-full bg-blue-500/[0.05] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-10 h-80 w-80 rounded-full bg-red-500/[0.04] blur-3xl" />
+        <div className="pointer-events-none absolute top-1/2 right-12 h-64 w-64 rounded-full bg-amber-400/[0.03] blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-14 md:px-8">
           <div className="grid gap-12 lg:grid-cols-[1.2fr_1.8fr]">
 
             {/* Left: Brand + contact */}
-            <div>
-              <Link href="/" className="inline-flex items-center">
-                <CarClickBDLogo className="h-[64px] w-[210px]" />
-              </Link>
-
-              <p
-                className="mt-4 max-w-sm text-sm leading-7"
-                style={{ color: "#64748b" }}
-              >
-                A cleaner way to browse verified cars, compare details, verify
-                auction sheets, and contact sellers with confidence.
-              </p>
-
-              {/* Contact rows */}
-              <div className="mt-6 space-y-3">
-                <a
-                  href={`https://wa.me/${siteContact.whatsappDigits}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex items-center gap-3 text-sm transition-all duration-200"
-                  style={{ color: "#475569" }}
+            <div className="flex flex-col justify-between">
+              <div>
+                <Link
+                  href="/"
+                  className="inline-flex items-center transition-transform duration-200 hover:scale-[1.02]"
                 >
-                  <span
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 group-hover:scale-105"
-                    style={{ background: "#f0fdf4", color: "#16a34a" }}
-                  >
-                    <FaWhatsapp size={15} />
-                  </span>
-                  <span className="transition-colors duration-200 group-hover:text-[#e50914]">
-                    {siteContact.whatsapp}
-                  </span>
-                </a>
+                  <CarClickBDLogo className="h-[64px] w-[210px]" />
+                </Link>
 
-                <div
-                  className="flex items-center gap-3 text-sm"
-                  style={{ color: "#475569" }}
+                <p
+                  className="mt-4 max-w-sm text-sm leading-7"
+                  style={{ color: "#64748b" }}
                 >
-                  <span
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-                    style={{ background: "#eff6ff", color: "#2563eb" }}
-                  >
-                    <Mail size={14} />
-                  </span>
-                  <span>{siteContact.email}</span>
-                </div>
+                  A cleaner way to browse verified cars, compare details, verify
+                  auction sheets, and contact sellers with confidence.
+                </p>
 
-                <div
-                  className="flex items-start gap-3 text-sm"
-                  style={{ color: "#475569" }}
-                >
-                  <span
-                    className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-                    style={{ background: "#fff7ed", color: "#ea580c" }}
+                {/* Contact card */}
+                <div className="mt-6 space-y-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4.5 shadow-[0_4px_20px_rgba(15,23,42,0.03)] backdrop-blur-sm">
+                  <a
+                    href={`https://wa.me/${siteContact.whatsappDigits}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center gap-3 text-sm transition-all duration-200"
+                    style={{ color: "#475569" }}
                   >
-                    <MapPin size={14} />
-                  </span>
-                  <span className="leading-6">
                     <span
-                      className="block text-[11px] font-bold uppercase tracking-wider"
-                      style={{ color: "#0f172a" }}
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-emerald-200/70 transition-all duration-200 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white group-hover:shadow-sm"
+                      style={{ background: "#f0fdf4", color: "#16a34a" }}
                     >
-                      {siteContact.company}
+                      <FaWhatsapp size={15} />
                     </span>
-                    {siteContact.addressLines.map((line) => (
+                    <span className="font-medium transition-colors duration-200 group-hover:text-[#e50914]">
+                      {siteContact.whatsapp}
+                    </span>
+                  </a>
+
+                  <div
+                    className="flex items-center gap-3 text-sm"
+                    style={{ color: "#475569" }}
+                  >
+                    <span
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-blue-200/70"
+                      style={{ background: "#eff6ff", color: "#2563eb" }}
+                    >
+                      <Mail size={14} />
+                    </span>
+                    <span className="font-medium">{siteContact.email}</span>
+                  </div>
+
+                  <div
+                    className="flex items-start gap-3 text-sm"
+                    style={{ color: "#475569" }}
+                  >
+                    <span
+                      className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-amber-200/70"
+                      style={{ background: "#fff7ed", color: "#ea580c" }}
+                    >
+                      <MapPin size={14} />
+                    </span>
+                    <span className="leading-6">
                       <span
-                        key={line}
-                        className="block text-sm"
-                        style={{ color: "#64748b" }}
+                        className="block text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "#0f172a" }}
                       >
-                        {line}
+                        {siteContact.company}
                       </span>
-                    ))}
-                  </span>
+                      {siteContact.addressLines.map((line) => (
+                        <span
+                          key={line}
+                          className="block text-xs"
+                          style={{ color: "#64748b" }}
+                        >
+                          {line}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
                 </div>
               </div>
-
 
               {/* Mobile divider */}
               <div className="mt-8 h-px w-full bg-slate-200/70 lg:hidden" />
             </div>
 
             {/* Right: Nav columns */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-5 lg:pt-[72px]">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-5 lg:pt-3">
               {footerColumns.map((column, idx) => {
                 const isCompanyColumn = idx === footerColumns.length - 1; // 5th column (Company)
                 return (
@@ -185,16 +230,19 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                         : ""
                     }
                   >
-                    <h4
-                      className="mb-3.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.15em]"
-                      style={{ color: "#0f172a" }}
-                    >
-                      <span
-                        className="inline-block h-1.5 w-1.5 rounded-full"
-                        style={{ background: "#e50914" }}
-                      />
-                      {column.title}
-                    </h4>
+                    <div>
+                      <h4
+                        className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em]"
+                        style={{ color: "#0f172a" }}
+                      >
+                        <span
+                          className="inline-block h-1.5 w-1.5 rounded-full"
+                          style={{ background: "#e50914" }}
+                        />
+                        {column.title}
+                      </h4>
+                      <div className="mt-2 mb-3 h-[1.5px] w-6 rounded-full bg-gradient-to-r from-[#e50914] to-transparent" />
+                    </div>
                     <ul
                       className={
                         isCompanyColumn
@@ -209,40 +257,40 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                               href={link.href}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                              className="group inline-flex items-center py-1.5 text-sm font-medium transition-all duration-200"
                               style={{ color: "#64748b" }}
                               onMouseEnter={(e) => {
                                 const el = e.currentTarget as HTMLAnchorElement;
                                 el.style.color = "#e50914";
-                                el.style.paddingLeft = "4px";
                               }}
                               onMouseLeave={(e) => {
                                 const el = e.currentTarget as HTMLAnchorElement;
                                 el.style.color = "#64748b";
-                                el.style.paddingLeft = "0px";
                               }}
                             >
-                              {link.label}
+                              <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">
+                                {link.label}
+                              </span>
                             </a>
                           </li>
                         ) : (
                           <li key={link.href}>
                             <Link
                               href={link.href}
-                              className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                              className="group inline-flex items-center py-1.5 text-sm font-medium transition-all duration-200"
                               style={{ color: "#64748b" }}
                               onMouseEnter={(e) => {
                                 const el = e.currentTarget as HTMLAnchorElement;
                                 el.style.color = "#e50914";
-                                el.style.paddingLeft = "4px";
                               }}
                               onMouseLeave={(e) => {
                                 const el = e.currentTarget as HTMLAnchorElement;
                                 el.style.color = "#64748b";
-                                el.style.paddingLeft = "0px";
                               }}
                             >
-                              {link.label}
+                              <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">
+                                {link.label}
+                              </span>
                             </Link>
                           </li>
                         )
@@ -268,22 +316,47 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
 
       {/* Payment methods band */}
       <div
+        className="relative overflow-hidden"
         style={{
-          background: "#f8fafd",
+          background:
+            "linear-gradient(180deg, #f8fafd 0%, #ffffff 50%, #f8fafd 100%)",
           borderTop: "1px solid #e8edf5",
           borderBottom: "1px solid #e8edf5",
         }}
       >
-        <div className="mx-auto max-w-7xl px-4 py-5 md:px-8">
-          <Image
-            src="/assets/shared/payment-methods-eps-slim.png"
-            alt="Pay with Visa, Mastercard, American Express, DBBL Nexus, UnionPay, Rocket, bKash, OK, Tap, MeghnaPay, Nagad, mCash, Upay and CellFin. Verified by EPS Easy Payment System."
-            width={2000}
-            height={200}
-            quality={100}
-            unoptimized
-            className="mx-auto h-auto w-full max-w-[900px] object-contain"
-          />
+        {/* Subtle dot pattern in payment band */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.06]">
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern
+                id="paymentDotGrid"
+                x="0"
+                y="0"
+                width="24"
+                height="24"
+                patternUnits="userSpaceOnUse"
+              >
+                <rect x="2" y="2" width="2" height="2" fill="#0f172a" rx="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#paymentDotGrid)" />
+          </svg>
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 py-5 md:px-8">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-full max-w-[940px] rounded-2xl border border-slate-200/60 bg-white/80 px-6 py-3.5 shadow-[0_2px_12px_rgba(15,23,42,0.02)] backdrop-blur-sm">
+              <Image
+                src="/assets/shared/payment-methods-eps-slim.png"
+                alt="Pay with Visa, Mastercard, American Express, DBBL Nexus, UnionPay, Rocket, bKash, OK, Tap, MeghnaPay, Nagad, mCash, Upay and CellFin. Verified by EPS Easy Payment System."
+                width={2000}
+                height={200}
+                quality={100}
+                unoptimized
+                className="mx-auto h-auto w-full max-w-[880px] object-contain"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
