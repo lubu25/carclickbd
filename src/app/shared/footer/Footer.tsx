@@ -168,71 +168,89 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
               </div>
 
 
+              {/* Mobile divider */}
+              <div className="mt-8 h-px w-full bg-slate-200/70 lg:hidden" />
             </div>
 
             {/* Right: Nav columns */}
-            <div className="grid grid-cols-2 gap-8 md:grid-cols-5 lg:pt-[72px]">
-              {footerColumns.map((column) => (
-                <div key={column.title}>
-                  <h4
-                    className="mb-4 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.15em]"
-                    style={{ color: "#0f172a" }}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-5 lg:pt-[72px]">
+              {footerColumns.map((column, idx) => {
+                const isCompanyColumn = idx === footerColumns.length - 1; // 5th column (Company)
+                return (
+                  <div
+                    key={column.title}
+                    className={
+                      isCompanyColumn
+                        ? "col-span-2 pt-4 border-t border-slate-100 sm:col-span-1 sm:pt-0 sm:border-0"
+                        : ""
+                    }
                   >
-                    <span
-                      className="inline-block h-1.5 w-1.5 rounded-full"
-                      style={{ background: "#e50914" }}
-                    />
-                    {column.title}
-                  </h4>
-                  <ul className="flex flex-col gap-0.5">
-                    {column.links.map((link) =>
-                      link.external ? (
-                        <li key={link.href}>
-                          <a
-                            href={link.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
-                            style={{ color: "#64748b" }}
-                            onMouseEnter={(e) => {
-                              const el = e.currentTarget as HTMLAnchorElement;
-                              el.style.color = "#e50914";
-                              el.style.paddingLeft = "5px";
-                            }}
-                            onMouseLeave={(e) => {
-                              const el = e.currentTarget as HTMLAnchorElement;
-                              el.style.color = "#64748b";
-                              el.style.paddingLeft = "0px";
-                            }}
-                          >
-                            {link.label}
-                          </a>
-                        </li>
-                      ) : (
-                        <li key={link.href}>
-                          <Link
-                            href={link.href}
-                            className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
-                            style={{ color: "#64748b" }}
-                            onMouseEnter={(e) => {
-                              const el = e.currentTarget as HTMLAnchorElement;
-                              el.style.color = "#e50914";
-                              el.style.paddingLeft = "5px";
-                            }}
-                            onMouseLeave={(e) => {
-                              const el = e.currentTarget as HTMLAnchorElement;
-                              el.style.color = "#64748b";
-                              el.style.paddingLeft = "0px";
-                            }}
-                          >
-                            {link.label}
-                          </Link>
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              ))}
+                    <h4
+                      className="mb-3.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.15em]"
+                      style={{ color: "#0f172a" }}
+                    >
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ background: "#e50914" }}
+                      />
+                      {column.title}
+                    </h4>
+                    <ul
+                      className={
+                        isCompanyColumn
+                          ? "grid grid-cols-2 gap-x-6 gap-y-1 sm:flex sm:flex-col sm:gap-0.5"
+                          : "flex flex-col gap-0.5"
+                      }
+                    >
+                      {column.links.map((link) =>
+                        link.external ? (
+                          <li key={link.href}>
+                            <a
+                              href={link.href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                              style={{ color: "#64748b" }}
+                              onMouseEnter={(e) => {
+                                const el = e.currentTarget as HTMLAnchorElement;
+                                el.style.color = "#e50914";
+                                el.style.paddingLeft = "4px";
+                              }}
+                              onMouseLeave={(e) => {
+                                const el = e.currentTarget as HTMLAnchorElement;
+                                el.style.color = "#64748b";
+                                el.style.paddingLeft = "0px";
+                              }}
+                            >
+                              {link.label}
+                            </a>
+                          </li>
+                        ) : (
+                          <li key={link.href}>
+                            <Link
+                              href={link.href}
+                              className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                              style={{ color: "#64748b" }}
+                              onMouseEnter={(e) => {
+                                const el = e.currentTarget as HTMLAnchorElement;
+                                el.style.color = "#e50914";
+                                el.style.paddingLeft = "4px";
+                              }}
+                              onMouseLeave={(e) => {
+                                const el = e.currentTarget as HTMLAnchorElement;
+                                el.style.color = "#64748b";
+                                el.style.paddingLeft = "0px";
+                              }}
+                            >
+                              {link.label}
+                            </Link>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -270,12 +288,28 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
       </div>
 
       {/* Copyright bar */}
-      <div style={{ background: "#0f172a" }}>
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(90deg, #240843 0%, #4c1d95 50%, #2e0854 100%)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        {/* Subtle top light effect */}
+        <div
+          className="pointer-events-none absolute top-0 left-0 right-0 h-[1px]"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.4) 50%, transparent)",
+          }}
+        />
+
         <div className="mx-auto max-w-7xl px-4 py-4 md:px-8">
           <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
-            <p className="text-xs" style={{ color: "#94a3b8" }}>
+            <p className="text-xs text-purple-200/90">
               Copyright © 2026{" "}
-              <span className="font-semibold" style={{ color: "#f8fafc" }}>
+              <span className="font-semibold text-white">
                 CarClickBD
               </span>
               . All rights reserved.
@@ -294,21 +328,21 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                     aria-label={social.label}
                     className="group inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
                     style={{
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
-                      background: "rgba(255, 255, 255, 0.06)",
-                      color: "#94a3b8",
+                      border: "1px solid rgba(255, 255, 255, 0.22)",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      color: "#ffffff",
                     }}
                     onMouseEnter={(e) => {
                       const el = e.currentTarget as HTMLAnchorElement;
-                      el.style.borderColor = "#e50914";
-                      el.style.background = "#e50914";
-                      el.style.color = "#ffffff";
+                      el.style.borderColor = "#ffffff";
+                      el.style.background = "#ffffff";
+                      el.style.color = "#4c1d95";
                     }}
                     onMouseLeave={(e) => {
                       const el = e.currentTarget as HTMLAnchorElement;
-                      el.style.borderColor = "rgba(255, 255, 255, 0.12)";
-                      el.style.background = "rgba(255, 255, 255, 0.06)";
-                      el.style.color = "#94a3b8";
+                      el.style.borderColor = "rgba(255, 255, 255, 0.22)";
+                      el.style.background = "rgba(255, 255, 255, 0.1)";
+                      el.style.color = "#ffffff";
                     }}
                   >
                     <Icon className="text-[14px] transition-transform duration-300 group-hover:scale-110" />
@@ -326,13 +360,12 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                 <React.Fragment key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-xs transition-colors duration-200 hover:text-white"
-                    style={{ color: "#94a3b8" }}
+                    className="text-xs text-purple-200/80 transition-colors duration-200 hover:text-white"
                   >
                     {item.label}
                   </Link>
                   {idx < arr.length - 1 && (
-                    <span style={{ color: "#334155" }}>·</span>
+                    <span className="text-purple-400/50">·</span>
                   )}
                 </React.Fragment>
               ))}
