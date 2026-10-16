@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const defaultApiBaseUrl =
-  'https://carclickbd-backend.jdmcarworld.com/api/v1';
+  'https://backend.carclickbd.com/api/v1';
 const apiBaseUrl = (
   process.env.NEXT_PUBLIC_API_BASE_URL || defaultApiBaseUrl
 ).replace(/\/+$/, '');
@@ -52,7 +52,8 @@ const nextConfig = {
       "www.pngmart.com",
       "www.pngall.com",
       "cdn.pixabay.com",
-      "carclickbd-backend.jdmcarworld.com"
+      "carclickbd-backend.jdmcarworld.com",
+      "backend.carclickbd.com"
     ],
   },
 };

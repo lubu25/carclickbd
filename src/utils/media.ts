@@ -1,6 +1,6 @@
 const BACKEND_URL = new URL(
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://carclickbd-backend.jdmcarworld.com/api/v1",
+    "https://backend.carclickbd.com/api/v1",
 );
 const BACKEND_ORIGIN = BACKEND_URL.origin;
 const BACKEND_HOSTNAME = BACKEND_URL.hostname;
@@ -23,11 +23,13 @@ export const getMediaUrl = (url?: string | null) => {
   };
 
   // Serve backend uploads through the same-origin Next.js proxy. This also
-  // handles old records containing localhost or plain-HTTP upload URLs.
+  // handles old records containing localhost, old domain, or plain-HTTP upload URLs.
   try {
     const parsed = new URL(value, BACKEND_ORIGIN);
     const isBackendHost =
       parsed.hostname === BACKEND_HOSTNAME ||
+      parsed.hostname === "backend.carclickbd.com" ||
+      parsed.hostname === "carclickbd-backend.jdmcarworld.com" ||
       parsed.hostname === "localhost" ||
       parsed.hostname === "127.0.0.1";
     const uploadPath = isBackendHost
@@ -40,6 +42,7 @@ export const getMediaUrl = (url?: string | null) => {
     }
 
     if (isBackendHost && /^https?:\/\//i.test(value)) {
+      parsed.hostname = BACKEND_HOSTNAME;
       parsed.protocol = "https:";
       return parsed.toString();
     }
@@ -51,12 +54,17 @@ export const getMediaUrl = (url?: string | null) => {
     if (/^https?:\/\//i.test(value)) return FALLBACK_MEDIA_URL;
   }
 
-  // Already an absolute URL — return as is
+  // Already an absolute URL — return as is (and upgrade http to https / map old backend domain)
   if (/^https?:\/\//i.test(value)) {
-    return value.replace(
+    let normalized = value.replace(
+      /^https?:\/\/carclickbd-backend\.jdmcarworld\.com/i,
+      BACKEND_ORIGIN,
+    );
+    normalized = normalized.replace(
       /^http:\/\/res\.cloudinary\.com\//i,
       "https://res.cloudinary.com/",
     );
+    return normalized;
   }
 
   if (value.startsWith("/")) {

@@ -19,12 +19,17 @@ type ProductMetadata = {
 const siteUrl = "https://carclickbd.com";
 const apiBaseUrl = (
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://carclickbd-backend.jdmcarworld.com/api/v1"
+  "https://backend.carclickbd.com/api/v1"
 ).replace(/\/+$/, "");
 
 const toAbsoluteImageUrl = (value?: string) => {
   if (!value) return `${siteUrl}/assets/shared/car.png`;
-  if (/^https?:\/\//i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) {
+    return value.replace(
+      /^https?:\/\/carclickbd-backend\.jdmcarworld\.com/i,
+      "https://backend.carclickbd.com",
+    );
+  }
 
   try {
     return `${new URL(apiBaseUrl).origin}${value.startsWith("/") ? value : `/${value}`}`;
