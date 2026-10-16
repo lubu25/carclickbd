@@ -9,7 +9,7 @@ import {
   LinkedinOutlined,
   YoutubeOutlined,
 } from "@ant-design/icons";
-import { Mail, MapPin, ChevronRight } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { FaWhatsapp } from "react-icons/fa";
 import { siteContact } from "@/constants/siteContact";
@@ -72,57 +72,217 @@ const socialLinks = [
   { label: "YouTube", href: "https://youtube.com", icon: YoutubeOutlined },
 ];
 
-
-
 const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) => {
   return (
-    <footer className="relative bg-[#020617] text-slate-300">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-900/10 via-[#020617]/0 to-transparent"></div>
-      
+    <footer className="relative bg-white" style={{ borderTop: "1px solid #e8edf5" }}>
 
+      {/* Top accent bar */}
+      <div
+        style={{
+          height: "3px",
+          background:
+            "linear-gradient(90deg, #e50914 0%, #ff6b6b 35%, #f0b90b 65%, #e50914 100%)",
+        }}
+      />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 md:px-8 lg:py-16">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_1.6fr]">
-          <div>
-            <Link href="/" className="inline-flex items-center">
-              <CarClickBDLogo className="h-[68px] w-[220px]" />
-            </Link>
-            <p className="mt-4 max-w-md text-sm font-medium leading-7 text-slate-400">
-              A cleaner way to browse verified cars, compare details, verify
-              auction sheets, and contact sellers with confidence.
-            </p>
+      {/* Main body */}
+      <div style={{ background: "linear-gradient(180deg, #f8fafd 0%, #ffffff 100%)" }}>
+        <div className="mx-auto max-w-7xl px-4 py-14 md:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.2fr_1.8fr]">
 
-            <div className="mt-6 space-y-3 text-sm">
-              <a
-                href={`https://wa.me/${siteContact.whatsappDigits}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 transition hover:text-white"
+            {/* Left: Brand + contact */}
+            <div>
+              <Link href="/" className="inline-flex items-center">
+                <CarClickBDLogo className="h-[64px] w-[210px]" />
+              </Link>
+
+              <p
+                className="mt-4 max-w-sm text-sm leading-7"
+                style={{ color: "#64748b" }}
               >
-                <FaWhatsapp size={17} className="text-[#f0b90b]" />
-                <span>{siteContact.whatsapp}</span>
-              </a>
-              <p className="flex items-center gap-3">
-                <Mail size={16} className="text-[#f0b90b]" />
-                <span>{siteContact.email}</span>
+                A cleaner way to browse verified cars, compare details, verify
+                auction sheets, and contact sellers with confidence.
               </p>
-              <p className="flex items-start gap-3">
-                <MapPin size={16} className="text-[#f0b90b]" />
-                <span>
-                  <span className="block font-bold text-slate-200">
-                    {siteContact.company}
+
+              {/* Contact rows */}
+              <div className="mt-6 space-y-3">
+                <a
+                  href={`https://wa.me/${siteContact.whatsappDigits}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center gap-3 text-sm transition-all duration-200"
+                  style={{ color: "#475569" }}
+                >
+                  <span
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 group-hover:scale-105"
+                    style={{ background: "#f0fdf4", color: "#16a34a" }}
+                  >
+                    <FaWhatsapp size={15} />
                   </span>
-                  {siteContact.addressLines.map((line) => (
-                    <span key={line} className="block">
-                      {line}
+                  <span className="transition-colors duration-200 group-hover:text-[#e50914]">
+                    {siteContact.whatsapp}
+                  </span>
+                </a>
+
+                <div
+                  className="flex items-center gap-3 text-sm"
+                  style={{ color: "#475569" }}
+                >
+                  <span
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+                    style={{ background: "#eff6ff", color: "#2563eb" }}
+                  >
+                    <Mail size={14} />
+                  </span>
+                  <span>{siteContact.email}</span>
+                </div>
+
+                <div
+                  className="flex items-start gap-3 text-sm"
+                  style={{ color: "#475569" }}
+                >
+                  <span
+                    className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+                    style={{ background: "#fff7ed", color: "#ea580c" }}
+                  >
+                    <MapPin size={14} />
+                  </span>
+                  <span className="leading-6">
+                    <span
+                      className="block text-[11px] font-bold uppercase tracking-wider"
+                      style={{ color: "#0f172a" }}
+                    >
+                      {siteContact.company}
                     </span>
-                  ))}
-                </span>
-              </p>
+                    {siteContact.addressLines.map((line) => (
+                      <span
+                        key={line}
+                        className="block text-sm"
+                        style={{ color: "#64748b" }}
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              </div>
+
+
             </div>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            {/* Right: Nav columns */}
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-5 lg:pt-[72px]">
+              {footerColumns.map((column) => (
+                <div key={column.title}>
+                  <h4
+                    className="mb-4 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.15em]"
+                    style={{ color: "#0f172a" }}
+                  >
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ background: "#e50914" }}
+                    />
+                    {column.title}
+                  </h4>
+                  <ul className="flex flex-col gap-0.5">
+                    {column.links.map((link) =>
+                      link.external ? (
+                        <li key={link.href}>
+                          <a
+                            href={link.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                            style={{ color: "#64748b" }}
+                            onMouseEnter={(e) => {
+                              const el = e.currentTarget as HTMLAnchorElement;
+                              el.style.color = "#e50914";
+                              el.style.paddingLeft = "5px";
+                            }}
+                            onMouseLeave={(e) => {
+                              const el = e.currentTarget as HTMLAnchorElement;
+                              el.style.color = "#64748b";
+                              el.style.paddingLeft = "0px";
+                            }}
+                          >
+                            {link.label}
+                          </a>
+                        </li>
+                      ) : (
+                        <li key={link.href}>
+                          <Link
+                            href={link.href}
+                            className="inline-block py-1.5 text-sm font-medium transition-all duration-200"
+                            style={{ color: "#64748b" }}
+                            onMouseEnter={(e) => {
+                              const el = e.currentTarget as HTMLAnchorElement;
+                              el.style.color = "#e50914";
+                              el.style.paddingLeft = "5px";
+                            }}
+                            onMouseLeave={(e) => {
+                              const el = e.currentTarget as HTMLAnchorElement;
+                              el.style.color = "#64748b";
+                              el.style.paddingLeft = "0px";
+                            }}
+                          >
+                            {link.label}
+                          </Link>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div
+            className="mt-12"
+            style={{
+              height: "1px",
+              background:
+                "linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Payment methods band */}
+      <div
+        style={{
+          background: "#f8fafd",
+          borderTop: "1px solid #e8edf5",
+          borderBottom: "1px solid #e8edf5",
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-4 py-5 md:px-8">
+          <Image
+            src="/assets/shared/payment-methods-eps-slim.png"
+            alt="Pay with Visa, Mastercard, American Express, DBBL Nexus, UnionPay, Rocket, bKash, OK, Tap, MeghnaPay, Nagad, mCash, Upay and CellFin. Verified by EPS Easy Payment System."
+            width={2000}
+            height={200}
+            quality={100}
+            unoptimized
+            className="mx-auto h-auto w-full max-w-[900px] object-contain"
+          />
+        </div>
+      </div>
+
+      {/* Copyright bar */}
+      <div style={{ background: "#0f172a" }}>
+        <div className="mx-auto max-w-7xl px-4 py-4 md:px-8">
+          <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
+            <p className="text-xs" style={{ color: "#94a3b8" }}>
+              Copyright © 2026{" "}
+              <span className="font-semibold" style={{ color: "#f8fafc" }}>
+                CarClickBD
+              </span>
+              . All rights reserved.
+            </p>
+
+            {/* Social media icons in the center */}
+            <div className="flex items-center gap-2.5">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -132,67 +292,52 @@ const Footer = ({ showPaymentBanner = false }: { showPaymentBanner?: boolean }) 
                     target="_blank"
                     rel="noreferrer"
                     aria-label={social.label}
-                    className="group relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/5 text-lg text-white transition-all duration-300 hover:border-[#e50914] hover:bg-[#e50914] hover:text-white hover:shadow-[0_0_15px_rgba(229,9,20,0.5)]"
+                    className="group inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
+                    style={{
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      background: "rgba(255, 255, 255, 0.06)",
+                      color: "#94a3b8",
+                    }}
+                    onMouseEnter={(e) => {
+                      const el = e.currentTarget as HTMLAnchorElement;
+                      el.style.borderColor = "#e50914";
+                      el.style.background = "#e50914";
+                      el.style.color = "#ffffff";
+                    }}
+                    onMouseLeave={(e) => {
+                      const el = e.currentTarget as HTMLAnchorElement;
+                      el.style.borderColor = "rgba(255, 255, 255, 0.12)";
+                      el.style.background = "rgba(255, 255, 255, 0.06)";
+                      el.style.color = "#94a3b8";
+                    }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-                    <Icon className="relative z-10 transition-transform duration-300 group-hover:scale-110" />
+                    <Icon className="text-[14px] transition-transform duration-300 group-hover:scale-110" />
                   </a>
                 );
               })}
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-7 md:grid-cols-5 lg:pt-[84px]">
-            {footerColumns.map((column) => (
-              <div key={column.title} className="relative z-10">
-                <h4 className="mb-4 flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.16em] text-[#f0b90b]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#e50914] shadow-[0_0_8px_#e50914]"></span>
-                  {column.title}
-                </h4>
-                <ul className="flex flex-col">
-                  {column.links.map((link) => (
-                    <li key={link.href} className="group border-b border-white/5 last:border-0">
-                      {link.external ? (
-                        <a
-                          href={link.href}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center py-2.5 text-sm font-medium text-slate-400 transition-all duration-300 hover:text-white"
-                        >
-                          <ChevronRight size={16} className="w-0 overflow-hidden text-[#e50914] transition-all duration-300 group-hover:mr-1.5 group-hover:w-4" />
-                          <span className="transform transition-all duration-300 group-hover:translate-x-1">{link.label}</span>
-                        </a>
-                      ) : (
-                        <Link
-                          href={link.href}
-                          className="flex items-center py-2.5 text-sm font-medium text-slate-400 transition-all duration-300 hover:text-white"
-                        >
-                          <ChevronRight size={16} className="w-0 overflow-hidden text-[#e50914] transition-all duration-300 group-hover:mr-1.5 group-hover:w-4" />
-                          <span className="transform transition-all duration-300 group-hover:translate-x-1">{link.label}</span>
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="mt-12 border-t border-white/10 pt-8 text-center text-sm">
-          <div className="mb-8">
-            <Image
-              src="/assets/shared/payment-methods-eps-slim.png"
-              alt="Pay with Visa, Mastercard, American Express, DBBL Nexus, UnionPay, Rocket, bKash, OK, Tap, MeghnaPay, Nagad, mCash, Upay and CellFin. Verified by EPS Easy Payment System."
-              width={2000}
-              height={200}
-              quality={100}
-              unoptimized
-              className="h-auto w-full max-w-[1000px] mx-auto object-contain"
-            />
+            <div className="flex items-center gap-4">
+              {[
+                { label: "Privacy", href: "/privacy-policy" },
+                { label: "Terms", href: "/terms-service" },
+                { label: "Cookies", href: "/cookie-policy" },
+              ].map((item, idx, arr) => (
+                <React.Fragment key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-xs transition-colors duration-200 hover:text-white"
+                    style={{ color: "#94a3b8" }}
+                  >
+                    {item.label}
+                  </Link>
+                  {idx < arr.length - 1 && (
+                    <span style={{ color: "#334155" }}>·</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-          <p className="text-slate-500">
-            Copyright © 2026 CarClickBD. All rights reserved.
-          </p>
         </div>
       </div>
     </footer>

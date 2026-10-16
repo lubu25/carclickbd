@@ -289,16 +289,16 @@ const Header: React.FC = () => {
   ];
 
   const pillBaseClass =
-    "group relative inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs lg:text-[13px] font-semibold rounded-full transition-all duration-200 active:scale-95";
+    "group relative inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 active:scale-95 select-none";
   const pillActiveClass =
-    "bg-gradient-to-r from-[#d91620] to-[#b80f17] text-white font-bold shadow-[0_2px_10px_rgba(217,22,32,0.35)] ring-1 ring-red-500/20";
+    "bg-[#1a56db] text-white font-bold shadow-[0_3px_12px_rgba(26,86,219,0.35)] ring-1 ring-blue-400/30";
   const pillInactiveClass =
-    "text-slate-600 hover:text-slate-950 hover:bg-white hover:shadow-xs";
+    "text-slate-700 hover:text-[#1a56db] hover:bg-blue-50 font-medium";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-[0_4px_25px_-5px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.03)]">
-      {/* Subtle top luxury accent line */}
-      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#e50914] to-[#f0b90b]" />
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.07)]">
+      {/* Top accent line — blue brand gradient */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-[#1a56db] via-[#3b82f6] to-[#1a56db]" />
 
       <div className="mx-auto flex max-w-[1720px] items-center justify-between gap-3 px-3 py-2.5 sm:px-6 md:py-3 lg:gap-4 lg:px-8">
         {/* Brand Logo */}
@@ -309,9 +309,9 @@ const Header: React.FC = () => {
           />
         </Link>
 
-        {/* Center Pill Button Navigation Tabs */}
+        {/* Center Navigation Tabs */}
         <nav className="hidden xl:flex items-center">
-          <div className="flex items-center gap-1 rounded-full border border-slate-200/90 bg-slate-100/90 p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center gap-0.5">
             {/* Home Pill */}
             <Link
               href="/"
@@ -334,11 +334,11 @@ const Header: React.FC = () => {
             >
               <Calculator
                 size={14}
-                className={isDutyActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+                className={isDutyActive ? "text-white" : "text-slate-400 group-hover:text-[#1a56db] transition-colors"}
               />
               <span>Duty Calculator</span>
               {isDutyActive && (
-                <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
               )}
             </Link>
 
@@ -349,11 +349,11 @@ const Header: React.FC = () => {
             >
               <Car
                 size={14}
-                className={isCarsActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+                className={isCarsActive ? "text-white" : "text-slate-400 group-hover:text-[#1a56db] transition-colors"}
               />
               <span>Find Cars</span>
               {isCarsActive && (
-                <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
               )}
             </Link>
 
@@ -366,10 +366,10 @@ const Header: React.FC = () => {
             >
               <CalendarCheck
                 size={14}
-                className="text-slate-500 group-hover:text-slate-900 transition-colors"
+                className="text-slate-400 group-hover:text-[#1a56db] transition-colors"
               />
-              <span>Production Year Check</span>
-              <ExternalLink size={11} className="text-slate-400 group-hover:text-slate-700" />
+              <span>Production Year</span>
+              <ExternalLink size={11} className="text-slate-300 group-hover:text-[#1a56db]" />
             </a>
 
             {/* Help Dropdown Pill */}
@@ -380,16 +380,16 @@ const Header: React.FC = () => {
               >
                 <HelpCircle
                   size={14}
-                  className={isHelpActive ? "text-white" : "text-slate-500 group-hover:text-slate-900 transition-colors"}
+                  className={isHelpActive ? "text-white" : "text-slate-400 group-hover:text-[#1a56db] transition-colors"}
                 />
                 <span>Help</span>
                 <DownOutlined
                   className={`text-[9px] ${
-                    isHelpActive ? "text-white" : "text-slate-400 group-hover:text-slate-800"
+                    isHelpActive ? "text-white" : "text-slate-300 group-hover:text-[#1a56db]"
                   }`}
                 />
                 {isHelpActive && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] animate-pulse" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
                 )}
               </button>
             </Dropdown>
@@ -397,44 +397,42 @@ const Header: React.FC = () => {
         </nav>
 
         {/* Right Action Controls */}
-        <div className="hidden lg:flex shrink-0 items-center gap-2.5">
-          {/* Verify Auction Sheet Pill Button */}
+        <div className="hidden lg:flex shrink-0 items-center gap-2">
+          {/* Verify Auction Sheet Button */}
           <Link href="/verify-auction-sheet" className="shrink-0">
             <button
               type="button"
-              className={`group relative overflow-hidden rounded-full border border-amber-300/80 bg-gradient-to-r from-[#f0b90b] via-[#ffd359] to-[#f0b90b] px-4 py-2 text-xs xl:text-sm font-extrabold text-slate-950 shadow-[0_3px_14px_rgba(240,185,11,0.32)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_22px_rgba(240,185,11,0.48)] active:translate-y-0 flex items-center gap-1.5 ${
-                isVerifyActive
-                  ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
-                  : ""
+              className={`group relative overflow-hidden rounded-lg border border-amber-400 bg-gradient-to-r from-[#f0b90b] to-[#f5c842] px-4 py-2 text-[13px] font-extrabold text-slate-900 shadow-[0_2px_10px_rgba(240,185,11,0.3)] transition-all duration-200 hover:shadow-[0_4px_18px_rgba(240,185,11,0.45)] hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5 ${
+                isVerifyActive ? "ring-2 ring-amber-400 ring-offset-1" : ""
               }`}
             >
-              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
-              <ShieldCheck size={16} className="text-slate-950 stroke-[2.5]" />
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+              <ShieldCheck size={15} className="stroke-[2.5]" />
               <span>Verify Auction Sheet</span>
             </button>
           </Link>
 
-          {/* Buy your car Pill Button */}
+          {/* Buy your car Button */}
           <Dropdown menu={{ items: buyMenu }} trigger={["hover"]} placement="bottom">
             <button
               type="button"
-              className="group flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/90 bg-slate-100/90 px-3.5 py-2 text-xs xl:text-sm font-bold text-slate-800 shadow-xs transition-all duration-200 hover:border-slate-300 hover:bg-slate-200/80 hover:text-slate-950 active:scale-95"
+              className="group flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-bold text-blue-700 transition-all duration-200 hover:border-blue-400 hover:bg-blue-100 hover:text-blue-800 active:scale-95"
             >
-              <Car size={14} className="text-slate-600 group-hover:text-slate-900 transition-colors" />
+              <Car size={14} className="text-blue-500 group-hover:text-blue-700 transition-colors" />
               <span>Buy your car</span>
-              <DownOutlined className="text-[10px] text-slate-400 group-hover:text-slate-700 transition-transform duration-200 group-hover:translate-y-0.5" />
+              <DownOutlined className="text-[10px] text-blue-400 group-hover:text-blue-700" />
             </button>
           </Dropdown>
 
-          {/* Sell your car Pill Button */}
+          {/* Sell your car Button */}
           <Dropdown menu={{ items: sellMenu }} trigger={["hover"]} placement="bottom">
             <button
               type="button"
-              className="group flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-2 text-xs xl:text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md active:translate-y-0"
+              className="group flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-[13px] font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md active:translate-y-0"
             >
               <Tag size={13} className="text-amber-400" />
               <span>Sell your car</span>
-              <DownOutlined className="text-[10px] text-slate-400 group-hover:text-white transition-transform duration-200 group-hover:translate-y-0.5" />
+              <DownOutlined className="text-[10px] text-slate-400 group-hover:text-white" />
             </button>
           </Dropdown>
 
@@ -442,7 +440,7 @@ const Header: React.FC = () => {
           <Dropdown menu={{ items: languageMenu }} placement="bottomRight" trigger={["hover"]}>
             <button
               type="button"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-950 hover:scale-105 shadow-xs"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 hover:scale-105 shadow-sm"
               aria-label="Change language"
               title="Change language"
             >
